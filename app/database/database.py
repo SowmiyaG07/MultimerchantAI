@@ -7,14 +7,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker,declarative_base
 
 from sqlalchemy.engine import URL
+from sqlalchemy import text
 
 
-load_dotenv
+load_dotenv()
 
 
 server = os.getenv("DB_SERVER")
 database = os.getenv("DB_NAME")
-username = os.getenv("DB_USERNAME")
+username = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
 driver = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
 

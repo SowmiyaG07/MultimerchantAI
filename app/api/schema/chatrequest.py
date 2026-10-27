@@ -6,9 +6,10 @@ from datetime import date
 class chatrequest(BaseModel):
     message : str = Field(...,min_length=2,max_length=2000)
     session_id : str | None = None
-    latitude : float | None = Field (...,ge=-90,le=90)
-    longitude : float | None = Field(...,ge=-180 , le = 180)
     customer_id : str | None = None
+    latitude : float | None = Field (None,ge=-90,le=90)
+    longitude : float | None = Field(None,ge=-180 , le = 180)
+    
     from_date : date | None = None
     to_date : date | None = None
     
@@ -24,7 +25,7 @@ class chatrequest(BaseModel):
     
     @model_validator(mode="after")
     def _validatedaterange(self):
-        if self.from_date > self.to_date :
+        if self.from_date and self.to_date and self.from_date > self.to_date :
             raise ValueError("From_date cannot be greater than to date")
         return self
     

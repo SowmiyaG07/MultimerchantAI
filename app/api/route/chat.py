@@ -2,17 +2,22 @@ from fastapi import APIRouter,Depends,HTTPException,status
 from app.api.schema.chatrequest import chatresponse,chatrequest
 from app.services.customer_service import getcustomerid_email,getcustomerid
 import uuid
+from datetime import datetime
 from app.api.dependencies import get_current_customer_id
+from app.agent.munomultiagent import ollama_model
+from app.agent.graph.workflow import multiagent
+from app.services.history_service import save_conversation_to_sql
+from app.cache.redis_cache import append_conversation_to_redis
 
 
 chatrouter = APIRouter(tags=["chat"])
 
 
 @chatrouter.post("/chat",response_model=chatresponse)
-async def chat(request:chatrequest,customer_id : int = Depends(get_current_customer_id),):
+async def chat(request:chatrequest,customerid : int = Depends(get_current_customer_id),):
     trace_id = str(uuid.uuid4())
     try :
-        customerid = request.customer_id
+        
         
         customer = getcustomerid(customerid)
         if customer is None:
@@ -36,7 +41,70 @@ async def chat(request:chatrequest,customer_id : int = Depends(get_current_custo
             )
         session_id = customer["external_id"]
         
-        return True
+        initial_state = {
+            "message": request.message,
+            "session_id": session_id,
+            "customer_id": str(customerid),
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+            "from_date": request.from_date,
+            "to_date": request.to_date,
+        }
+        
+        created_at = datetime.now()
+        
+        config = {
+    "run_name": "munomerchant_chat_request",
+    "tags": [
+        "munomerchant-ai",
+        "fastapi",
+    ],
+    "metadata": {
+        "trace_id": trace_id,
+        "customer_id": str(customerid),
+    },
+    "configurable": {
+        "thread_id": session_id,
+    },
+}
+
+        result = await multiagent.ainvoke(initial_state,config=config,)
+
+    
+
+        answer = result.get("response","")
+
+        # Save the turn so the next follow-up can use it.
+        # A failed save must not fail the chat response.
+        try:
+            await save_conversation_to_sql(
+                customer_id=customerid,
+                session_id=session_id,
+                trace_id=trace_id,
+                question=request.message,
+                answer=answer,
+                created_at=created_at,
+                completed_at=datetime.now(),
+                model_name=ollama_model,
+            )
+
+            await append_conversation_to_redis(
+                session_id=session_id,
+                question=request.message,
+                answer=answer,
+            )
+
+        except Exception as exc:
+            print(
+                f"[{trace_id}] HISTORY SAVE ERROR:"
+                f"{type(exc).__name__}:{exc}"
+            )
+
+        return {
+            "session_id"   : session_id,
+            "answer" : answer,
+            "trace_id" : trace_id
+        }
     
     except HTTPException:
         raise
