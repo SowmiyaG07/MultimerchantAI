@@ -3,9 +3,8 @@ from datetime import date, datetime, timedelta
 
 from app.agent.graph.state import Agentstate
 
-from  app.tools.merchant_tool import searchmerchant
-from app.utilities.StateMapping import _WEEKDAY_COLUMNS 
-from app.tools.near_bymerchant_tool import search_nearbymerchant
+from app.tools.redemption_tool import get_redemption_history
+from app.utilities.StateMapping import OFFER_TYPE_LABELS
 
 
 # Used when the user types "show my redemption history" without the
@@ -22,13 +21,13 @@ def _to_date(value,field_name):
     """
     
     if isinstance(value,datetime):
-        return value.date
+        return value.date()
     
     if isinstance(value,date):
         return value
     try:
         text = str(value).strip()
-        dateoutput = text[::10]
+        dateoutput = date.fromisoformat(text[::10])
         return dateoutput
     
     except(TypeError,ValueError):
@@ -37,7 +36,9 @@ def _to_date(value,field_name):
             "Expected a date in YYYY-MM-DD format"
         )
         
-    
+def _is_blank(value: Any) -> bool:
+    """Small models send None, "", "null" or "none" for no value."""
+    return value is None or str(value).strip().lower() in ("", "null", "none") 
 
 def resolve_date_range(from_date=None,to_date=None):
     """
@@ -50,8 +51,8 @@ def resolve_date_range(from_date=None,to_date=None):
     def _blank(value):
         if value is None:
             return True
-        text = value.strip().lower()
-        if text in ("","None","null"): 
+        text = str(value).strip().lower()
+        if text in ("","none","null"): 
             return True
         
         return False
@@ -76,53 +77,132 @@ def resolve_date_range(from_date=None,to_date=None):
     return fromdate,todate
         
 # Only the fields the answer actually needs.
-def _to_llm_view(record):
+def _to_llm_view(record: dict)->dict:
+    redeemed_on = record["RedeemedOn"]
+    amount_spent = record["GrossSale"]
+     # Format the date
+    if redeemed_on:
+        formatted_date = redeemed_on.strftime("%Y-%m-%d %I:%M %p")
+    else:
+        formatted_date = None
+
+    # Format the amount spent
+    if amount_spent is not None:
+        formatted_amount = f"${amount_spent:.2f}"
+    else:
+        formatted_amount = None
     return {
-        "location_id": record["LocationID"],
-        "name": record["DBAName"],
-        "redeemed_on": record["CreatedOn"],
-        "amount": record["Amount"],
-        "offer": record["OfferInfo"],
+        "id": record["LocationID"],
+        "name": record["DBAName"] or record["BusinessName"],
+        "city": record["City"],
+        "state": record["State"],
+        "redeemed_on": formatted_date,
+        "amount_spent": formatted_amount,
+        "offer": _offer_text(record),
+        "offer_type": OFFER_TYPE_LABELS.get(record["OfferType"]),
     }
+
+def _offer_text(record):
     
+    # Prefer the text-based offer
+    free_offer = record["Get1CardFreeOffer"]
+
+    if free_offer:
+        return free_offer
+
+    # Otherwise, check the discount amount
+    amount = record["Get1CardAmount"]
+
+    if not amount:
+        return None
+
+    # Build the offer description
+    offer = f"${amount} off"
+
+    # Add the minimum purchase when available
+    minimum = record["Get1MinPurchaseAmount"]
+
+    if minimum:
+        offer += f" with a minimum purchase of ${minimum}"
+
+    return offer
+
 async def redemptionagent(state: Agentstate) -> dict :
-    customer_id = state.get("customer_id") | None 
-    from_date = state.get("from_date") | None 
-    to_date = state.get("to_date") | None 
-    params_list = state.get("redemption_search_params", [])
     """
     Get the CURRENT USER's own offer redemption history.
 
-    Use this tool when the user asks about their own redemptions:
-    - "Show my redemption history"
-    - "What offers have I redeemed?"
-    - "My redemptions last month"
-    - "Where did I use my card?"
-
-    IMPORTANT:
-    - customer_id is always supplied by the application from the
-      logged-in user -- pass "" for it; any value you pass is ignored.
-    - from_date / to_date are dates in YYYY-MM-DD format. Only set
-      them when the user states a period; otherwise leave them ""
-      and the last 30 days are used.
-    - This is NOT a merchant or offer search -- never use
-      search_merchants or search_offers for redemption history.
+    - customer_id comes from the login token (set in chat.py),
+      never from the LLM.
+    - Dates: the app's date picker first, then the dates the LLM
+      read from the message, otherwise the last 30 days.
+    - An empty params object is valid: the search is always limited
+      to this customer, so it is never an unfiltered search.
     """
-    customer_idd =  str(customer_id).strip()
-    
-    if customer_id is (None or ""):
-        raise ValueError("Customer_id is required")
-    
-    from_value, to_value = resolve_date_range(from_date,to_date)
-    records = get_redemption_history(customer_idd,from_value,to_value)
-    llm_records =[]
-    
-    for record in records:
-        data = _to_llm_view(record)
+    customer_id = state.get("customer_id")
+
+    if _is_blank(customer_id):
+        return {
+            "redemption_results":
+            "Please log in to see your redemption history."
+        }
+
+    # One redemption request per message.
+    params_list = state.get("redemption_agent_params") or [{}]
+    params = params_list[0]
+
+    from_date = state.get("from_date") or params.get("from_date")
+    to_date = state.get("to_date") or params.get("to_date")
+    merchant_name = params.get("merchant_name")
+
+    try:
+        from_value, to_value = resolve_date_range(from_date,to_date)
+        records = await get_redemption_history(customer_id,from_value,to_value,merchant_name)
         
-        llm_records.append(data)
+    except ValueError as error:
+        return {"redemption_results": str(error)}
+    
+    except Exception:
+        # Database or other errors: don't crash the whole graph
+        return {
+            "redemption_results":
+            "Sorry, I couldn't load your redemption history right now."
+        }
+    
+    period = (
+        f"{from_value.isoformat()} to {to_value.isoformat()}"
+    )
+    if not records:
+        return {
+        "redemption_results":
+        f"You have no redemptions from {period}."
+    }
         
-    return llm_records
+    count = len(records)
+    
+    noun = "redemption" if count == 1 else "redemptions"
+    
+    summary = (
+        f"You have {count} {noun} from {period}."
+    )
+    
+    # Only the latest rows are listed below, so say so in the summary
+    if count > MAX_LISTED_REDEMPTIONS:
+        summary += f" Showing the latest {MAX_LISTED_REDEMPTIONS}."
+    # Step 10: Prepare the results for the response agent
+    results = [
+        {
+            "summary": summary
+        }
+    ]
+     # Step 11: Include the latest 20 transaction records
+    for record in records[:MAX_LISTED_REDEMPTIONS]:
+        results.append(_to_llm_view(record))
+
+    # Step 12: Return the results to the LangGraph workflow
+    return {
+        "redemption_results": results
+    }
+
 
     
     

@@ -23,7 +23,7 @@ ollama_model = os.getenv("OLLAMA_MODEL")
 ollama_base_url = os.getenv("OLLAMA_BASE_URL")
 
 
-llm = ChatOllama(model=ollama_model,temperature = 0, num_ctx=8192,base_url=ollama_base_url,num_predict=256)
+llm = ChatOllama(model=ollama_model,temperature = 0, num_ctx=8192,base_url=ollama_base_url,num_predict=1024)
 
 
 
@@ -139,6 +139,39 @@ async def SupervisorAgent(state:Agentstate):
             ),
         }
 
+    # Small models often set merchant_name but leave
+    # merchant_search_params empty. Fall back to searching by name
+    # so the merchant agent still has a criterion.
+    
+    merchant_params = []
+    for item in decision.merchant_search_params:
+        merchant_params.append(item.model_dump())
+    
+    if "merchant_agent" in plan.selected_agents:
+        if not merchant_params:
+            if decision.merchant_name:
+                merchant_params = [
+                     {"name": decision.merchant_name}
+                    
+                ]
+    offer_params = []
+    for item in decision.offer_search_params:
+        offer_params.append(item.model_dump())
+
+
+# Step 4: Check whether offer parameters are missing
+    if "offer_agent" in plan.selected_agents:
+        if not offer_params:
+            if decision.merchant_name:
+                offer_params = [
+                {"name": decision.merchant_name}
+            ]
+
+    
+         
+    
+
+
     # 7. Return the query plan to the LangGraph workflow.
     return {
         "selected_agent": plan.selected_agents,
@@ -149,14 +182,10 @@ async def SupervisorAgent(state:Agentstate):
         "needs_clarification": False,
         "chat_history": history,
         "merchant_name": decision.merchant_name,
-        "merchant_search_params": [
-            item.model_dump()
-            for item in decision.merchant_search_params
-        ],
-        "offer_search_params": [
-                    item.model_dump()
-                    for item in decision.offer_search_params
-                ],
+        "merchant_search_params": merchant_params,
+        "offer_search_params": offer_params,
+        # Decision fields *_search_params map to the state keys
+        # nearby_agent_params / redemption_agent_params.
         "nearby_agent_params": [
                     item.model_dump()
                     for item in decision.nearby_search_params
@@ -182,15 +211,26 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision :
     Previous conversation (oldest first, latest last):
     {format_history_for_prompt(history)}
 
-    Use the latest conversation to replace references such as
-    "it", "they", "that restaurant" or "the first one" with the
-    merchant name in rewritten_query. If you cannot tell which
-    merchant is meant, set needs_clarification to true and ask
-    which merchant the user means.
-    """
+    History resolution rules:
+- Use conversation history to resolve references such as "it",
+  "they", "that restaurant", "the first one", and "those offers".
+- Rewrite the query using the resolved merchant, offer, or
+  restaurant name in rewritten_query.
+- Return the resolved merchant name in merchant_name when
+  a merchant can be identified.
+- Set history_needed to true when previous conversation
+  context is required.
+- If the reference cannot be resolved confidently, set
+  needs_clarification to true and explain what needs
+  clarification.
+"""
+
 
     prompt = f"""
     You are the supervisor for an AI Merchant Assistant.
+
+    Today's date is {date.today().isoformat()}. Use it to resolve
+    relative dates such as "today", "last week" or "last 7 days".
 
     Analyze the user's message and decide:
 
@@ -201,59 +241,265 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision :
     4. Rewrite the user's query clearly.
     5. Provide expanded search queries when appropriate.
     6. Ask for clarification if necessary.
+    7. Extract search parameters for every selected agent.
 
     Available agents:
     - merchant_agent
     - offer_agent
     - nearby_agent
     - redemption_agent
-    7. Identify the merchant name from the current message
+    8. Identify the merchant name from the current message
    or conversation history.
    - Do not invent merchant names.
    - If the user asks "What offers does it have?",
      resolve "it" using the conversation history.
    - Return the resolved name in merchant_name.
-   - If the merchant cannot be identified, ask for clarification.
+   - If the merchant cannot be identified from the available
+  context and is necessary to answer, request clarification.
 
-    Important:
-    - Do not assume missing conversation context.
-    - If the question refers to "it", "that restaurant",
-      "the first one", or similar references, set
-      history_needed to true when context is required.
-    - Do not classify unrelated questions as business-related.
-    - Return a structured response matching the schema.
-    
-    8. Extract search parameters for the selected agents.
+AGENT SELECTION RULES
 
-- merchant_search_params:
-  Extract attributes accepted by the merchant search tool,
-  such as name, category, city, state, country, address,
-  neighborhood, description, latitude, longitude, keyword,
-  and limit.
+- Select only agents relevant to the user's intent.
+- Multiple agents may be selected when a request requires
+  multiple kinds of information.
+- Do not classify unrelated questions as business-related.
+- Return a structured response matching the supplied schema.
 
-- offer_search_params:
-  Extract attributes accepted by the offer search tool.
-  Preserve the merchant name when searching for a specific
-  merchant's offers.
+SEARCH PARAMETER RULES
 
-- nearby_search_params:
-  Extract the location and filters accepted by the nearby
-  restaurant search tool. Use supplied coordinates when available.
-  Never invent coordinates.
-
-- redemption_search_params:
-  Extract the customer and date filters accepted by the
-  redemption search tool.
-
-Rules:
-- Populate parameters only for selected agents.
+General:
+- Populate the corresponding parameter list whenever its
+  agent is selected and a usable search criterion is available.
+- Do not leave a parameter list empty if the relevant
+  criterion is already present in the message or history.
+- Extract parameters only for selected agents.
 - Return an empty list for agents that are not selected.
+- Use the exact field names accepted by each Pydantic schema.
 - Do not invent missing values.
-- Use the exact parameter names defined in each schema.
-- If a required value is missing, ask for clarification.
+- Do not put parameters for one agent into another agent's list.
+- If a usable criterion is available, populate the parameter
+  list even when other optional filters are missing.
+- If the request genuinely lacks information required to
+  proceed, set needs_clarification to true as appropriate.
+
+1. MERCHANT AGENT
+
+Populate merchant_search_params with at least one parameter
+when merchant_agent is selected and the user provides a
+merchant name or another usable merchant-search criterion.
+
+Extract only fields supported by the merchant-search schema,
+such as name, category, city, state, country, address,
+neighborhood, description, keyword, and limit.
+
+Do not include latitude or longitude unless the merchant
+search schema and tool explicitly require them.
+
+Preserve the identified merchant name in merchant_name.
+
+Example:
+User: "Explain Dreamland BBQ"
+
+Expected:
+{{
+    "selected_agent": ["merchant_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "merchant_search_params": [
+        {{"name": "Dreamland BBQ"}}
+    ]
+}}
+
+Example:
+User: "Find Italian restaurants in Atlanta"
+
+Expected:
+{{
+    "selected_agent": ["merchant_agent"],
+    "merchant_search_params": [
+        {{
+            "category": "restaurant",
+            "city": "Atlanta",
+            "keyword": "Italian"
+        }}
+    ]
+}}
+
+2. OFFER AGENT
+
+Populate offer_search_params whenever offer_agent is selected
+and the user provides a usable offer-related criterion.
+
+Extract supported fields: name (the merchant name), keyword,
+city, state, offer_type, min_percent, max_percent and limit.
+
+When searching for a specific merchant's offers, preserve
+the merchant name in the offer parameters.
+
+Example:
+User: "Show me pizza offers"
+
+Expected:
+{{
+    "selected_agent": ["offer_agent"],
+    "offer_search_params": [
+        {{"keyword": "pizza"}}
+    ]
+}}
+
+Example:
+User: "What offers does Dreamland BBQ have?"
+
+Expected:
+{{
+    "selected_agent": ["offer_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "offer_search_params": [
+        {{"name": "Dreamland BBQ"}}
+    ]
+}}
+
+Example with conversation history:
+Previous conversation: The user was discussing Dreamland BBQ.
+User: "What offers does it have?"
+
+Expected:
+{{
+    "selected_agent": ["offer_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "offer_search_params": [
+        {{"name": "Dreamland BBQ"}}
+    ],
+    "history_needed": true
+}}
+
+Use the exact field names defined in the offer-search schema.
+If it uses "keyword" rather than "keywords", use "keyword".
+
+3. NEARBY AGENT
+
+Populate nearby_search_params whenever nearby_agent is selected
+and the user provides a usable nearby-search criterion.
+
+Extract supported filters such as category, cuisine, keyword,
+and radius_km.
+
+Do not extract latitude or longitude. The application supplies
+the user's device location automatically.
+
+Do not invent a location or claim the user's location is known
+if it is not supplied by the application.
+
+Example:
+User: "Find restaurants near me"
+
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "nearby_search_params": [
+        {{"category": "restaurant"}}
+    ]
+}}
+
+Example:
+User: "Find Italian restaurants nearby"
+
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "nearby_search_params": [
+        {{
+            "category": "restaurant",
+            "cuisine": "Italian"
+        }}
+    ]
+}}
+
+Example:
+User: "Find restaurants within 5 km"
+
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "nearby_search_params": [
+        {{
+            "category": "restaurant",
+            "radius_km": 5
+        }}
+    ]
+}}
+
+4. REDEMPTION AGENT
+
+Populate redemption_search_params whenever redemption_agent
+is selected for the user's own redemption-history request.
+
+Extract only supported filters:
+- from_date
+- to_date
+- merchant_name
+
+Use YYYY-MM-DD for dates when they can be resolved.
+Resolve relative dates from today's date given above.
+
+Never extract or request a customer ID. The application
+supplies the authenticated customer's identity automatically.
+
+If no filters are required, use an empty parameter object
+inside the list if permitted by the schema.
+
+Example:
+User: "Show my redemption history"
+
+Expected:
+{{
+    "selected_agent": ["redemption_agent"],
+    "redemption_search_params": [
+        {{}}
+    ]
+}}
+
+Example (if today's date were 2026-01-15):
+User: "Show my redemptions from the last 7 days"
+
+Expected:
+{{
+    "selected_agent": ["redemption_agent"],
+    "redemption_search_params": [
+        {{
+            "from_date": "2026-01-08",
+            "to_date": "2026-01-15"
+        }}
+    ]
+}}
+
+Example:
+User: "Show my redemptions at Dreamland BBQ"
+
+Expected:
+{{
+    "selected_agent": ["redemption_agent"],
+    "redemption_search_params": [
+        {{"merchant_name": "Dreamland BBQ"}}
+    ]
+}}
+IMPORTANT VALIDATION RULES
+
+- Each selected agent must have its corresponding parameter
+  list populated when a usable criterion is available.
+- Unselected agents must have empty parameter lists.
+- Parameter objects must match their corresponding Pydantic
+  models and actual tool inputs.
+- Do not return invented merchant names, locations, dates,
+  coordinates, customer IDs, or other values.
+- Resolve references from conversation history when possible.
+- If a reference is ambiguous, request clarification instead
+  of guessing.
+- Do not fabricate required parameters merely to avoid an
+  empty list.
+- Return only the structured output required by the schema.
     {history_section}
      User message: {message}
-    """
+"""
 
     decision = await supervised_llm.ainvoke(prompt)
     return decision

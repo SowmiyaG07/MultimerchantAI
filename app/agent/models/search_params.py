@@ -12,26 +12,31 @@ class MearchantSearchparams(BaseModel):
     address: str = ""
     neighborhood: str = ""
     description: str = ""
-    latitude: str = ""
-    longitude: str = ""
+    # latitude/longitude are not here on purpose. The merchant tool
+    # does not filter on them, and the LLM must not invent coordinates.
     keyword: str = ""
-    limit: str = "10"
+    # int | str: the LLM may return 10 or "10". A plain str field
+    # makes Pydantic v2 reject the number.
+    limit: int | str = "10"
 
 
 class OfferSearchParams(BaseModel):
     name: str = ""
+    min_percent: float | str | None = None
+    max_percent: float | str | None = None
     keyword: str = ""
-    category: str = ""
+    # No category/country: those are merchant details, which the
+    # merchant agent returns. The offer tool does not filter on them.
     city: str = ""
     state: str = ""
-    country: str = ""
     offer_type: str = ""
-    limit: str = "10"
+    limit: int | str = "10"
 
 
 class NearbySearchParams(BaseModel):
-    latitude: str = ""
-    longitude: str = ""
+    # latitude/longitude are not here on purpose. The nearby agent
+    # reads the user's device location from Agentstate, so the LLM
+    # can never invent or change the coordinates.
     category: str = ""
     maincategory: str = ""
     cuisine: str = ""
@@ -41,12 +46,14 @@ class NearbySearchParams(BaseModel):
     neighborhood: str = ""
     keyword: str = ""
     radius_km: float | None = None
-    limit: str = "10"
+    limit: int | str = "10"
 
 
 class RedemptionSearchParams(BaseModel):
-    customer_id: str = ""
+    # customer_id is not here on purpose. The redemption agent reads it
+    # from Agentstate (set from the login token in chat.py), so the LLM
+    # can never choose whose redemptions are fetched.
     from_date: str = ""
     to_date: str = ""
     merchant_name: str = ""
-    limit: str = "10"
+    limit: int | str = "10"

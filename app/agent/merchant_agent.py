@@ -1,10 +1,7 @@
 
-from typing import Any
-
 from app.agent.graph.state import Agentstate
 
 from  app.tools.merchant_tool import searchmerchant
-from app.utilities.StateMapping import _WEEKDAY_COLUMNS 
 from app.guardrails.inputguardrails import drop_invalid_state,drop_state_derived_from_address
 
 
@@ -20,10 +17,13 @@ def _to_int(value, default=10):
     text = str(value).strip().lower()
     if text in ("", "null", "none"):
         return default
-    return int(float(text))
+    try:
+        return int(float(text))
+    except ValueError:
+        return default
 
 
-def _social_media_links(record:str) -> str | None:
+def _social_media_links(record: dict) -> str | None:
     """Combine all available merchant social media links."""
     
     columns = (
@@ -41,9 +41,9 @@ def _social_media_links(record:str) -> str | None:
         link = record.get(column)
         if link:
             links.append(link)
-        if not links:
-            return None
-        return ",".join(links)
+    if not links:
+        return None
+    return ",".join(links)
     
     
 def _to_llm_view(record: dict) -> dict:
@@ -61,45 +61,12 @@ def _to_llm_view(record: dict) -> dict:
         "state": record["State"],
         "zip": record["Zip"],
         "country": record["CountryName"],
-        "region": record["RegionName"],
         "neighborhood": record["Neighborhood"],
         "phone": record["ContactPhone"],
         "website": record["BrandWebsite"],
-        "facebook": record["Facebook"],
-        "twitter": record["Twitter"],
-        "linkedin": record["LinkedIn"],
-        "pinterest": record["Pinterest"],
-        "instagram": record["Instagram"],
-        "yelp": record["Yelp"],
-        "youtube": record["YouTube"],
-        "opentable": record["OpenTable"],
-        "social_media": _social_media_links(record),
+          "social_media": _social_media_links(record),
         "description": record["WebsiteDescription"],
-        "offer": record["Get1CardFreeOffer"],
-        "offer_details": record["TheScoop"],
-        "offer_valid_until": record["OfferEndDate"],
-        "offer_valid_days": _offer_valid_days(record),
-        "offer_redeem_start_time": record.get(
-            "RedeemOfferStartTime"
-        ),
-        "offer_redeem_end_time": record.get(
-            "RedeemOfferEndTime"
-        ),
-        "latitude": record["Latitude"],
-        "longitude": record["Longitude"],
-        "radius": record["Radius"],
     }
-    
-
-def _offer_valid_days(record: dict) -> str | None:
-    """Return the days on which the offer is valid."""
-    days = []
-    for column,day in _WEEKDAY_COLUMNS:
-        if record.get(column):
-            days.append(day)
-    if not days :
-        return None 
-    return ",".join(days)  
 
 async def MerchantAgent(state: Agentstate) -> dict :
     """
@@ -145,11 +112,12 @@ Output: Return a message indicating that more search details are required.
     
     if not merchant_search_params: 
         return{
-            "merchat_results": ""
+            "merchant_results": ""
         }
 
     all_results = []
-    
+    searched = False
+
     for params in merchant_search_params:
         name = params.get("name", "")
         category = params.get("category", "")
@@ -159,8 +127,6 @@ Output: Return a message indicating that more search details are required.
         address = params.get("address", "")
         neighborhood = params.get("neighborhood", "")
         description = params.get("description", "")
-        latitude = params.get("latitude", "")
-        longitude = params.get("longitude", "")
         keyword = params.get("keyword", "")
         limit = params.get("limit", "10")
         
@@ -169,14 +135,18 @@ Output: Return a message indicating that more search details are required.
         
         valid_state = drop_state_derived_from_address(valid_state,address)
         
+        # Only count filters the tool actually applies, so an empty
+        # params object never turns into an unfiltered search.
         has_criteria = False
-        
-        for value in (  name,category,city,valid_state,country,address,neighborhood,description,latitude,longitude,keyword,):
+        for value in (name,category,city,valid_state,country,address,neighborhood,description,keyword,):
             if value not in (None,"",[],{}):
                 has_criteria = True
-                
-            
-            records = await searchmerchant(
+
+        if not has_criteria:
+            continue
+
+        searched = True
+        records = await searchmerchant(
             name=name or None,
             category=category or None,
             city=city or None,
@@ -186,15 +156,25 @@ Output: Return a message indicating that more search details are required.
             neighborhood=neighborhood or None,
             keyword=keyword or None,
             description=description or None,
-            latitude=latitude or None,
-            longitude=longitude or None,
             limit=_to_int(limit),
             merchant_names=None,
         )
-                # Convert each database row into a user-relevant record.
+
+        # Convert each database row into a user-relevant record.
         for record in records:
             all_results.append(_to_llm_view(record))
+
+    if not searched:
         return {
+            "merchant_results": "Please provide more details, such as a merchant name or city."
+        }
+
+    if not all_results:
+        return {
+            "merchant_results": "No matching merchants were found."
+        }
+
+    return {
         "merchant_results": all_results
     }
 

@@ -32,10 +32,11 @@ class Agentstate(TypedDict,total= False):
     redemption_agent_params: list[dict[str, Any]]
     merchant_name : str
     #Individual Agent results
-    merchant_results : str
-    offer_results : str
-    nearby_merchantresults : str
-    redemption_results : str
+    # Either a message string or a list of records from the tool.
+    merchant_results : str | list[dict[str, Any]]
+    offer_results : str | list[dict[str, Any]]
+    nearby_merchantresults : str | list[dict[str, Any]]
+    redemption_results : str | list[dict[str, Any]]
     response_results : str
     
     #Final response

@@ -22,9 +22,9 @@ def _tofloat(value,default=5.0):
     if value is None:
         return default
     
-    text = value.strip().lower()
+    text = str(value).strip().lower()
     
-    if text is ("","null","None"):
+    if text in ("","null","none"):
         return default 
     
     return float(text)
@@ -45,28 +45,34 @@ def _toint(value,default = 10):
         return default
     text = str(value).strip().lower()
     
-    if text is ("","None","null"):
+    if text in ("","none","null"):
         return default
     
-    return int(text)
+    return int(float(text))
 
 def validate_coordinates(latitude, longitude):
     """
     Validate GPS coordinates before querying the database.
     """
    
-    if latitude <= -90 or latitude <= 90 :
+    if latitude is None or longitude is None:
+        raise ValueError("Latitude and longitude are required.")
+
+    latitude = float(latitude)
+    longitude = float(longitude)
+
+    if latitude < -90 or latitude > 90:
         raise ValueError(
-            f"Invalid Latitude:{latitude}"
-            "Latitude should be in the range -90 to 90"
+            f"Invalid latitude: {latitude}. "
+            "Latitude should be in the range -90 to 90."
         )
-   
-    if longitude <= -180 or longitude <= 180:
-         raise ValueError(
-                    f"Invalid Latitude:{longitude}"
-                    "Latitude should be in the range -90 to 90"
-                )
-    
+
+    if longitude < -180 or longitude > 180:
+        raise ValueError(
+            f"Invalid longitude: {longitude}. "
+            "Longitude should be in the range -180 to 180."
+        )
+
     return latitude,longitude
     
 def _to_llm_view(record):
@@ -142,50 +148,53 @@ async def nearby_merchanagent(state:Agentstate) -> dict:
         
     """
     
-    nearby_merchantparams = state.get("near_by_agent_params")
+    nearby_merchantparams = state.get("nearby_agent_params")
     
     if not nearby_merchantparams:
         return{
             "nearby_merchantresults" : ""
         }
+
+    # The user's device location comes from the request (Agentstate),
+    # never from the LLM.
+    try:
+        lat,longi = validate_coordinates(
+            state.get("latitude"),
+            state.get("longitude"),
+        )
+    except (TypeError,ValueError):
+        return{
+            "nearby_merchantresults" : (
+                "Your location is not available. Please enable "
+                "location services to search for nearby restaurants."
+            )
+        }
         
     all_results = []
     
-    
-    
     for params in nearby_merchantparams:
-        latitude = params.get("latitude","")
-        longitude = params.get("longitude","")
         category = params.get("category","")
         maincategory = params.get("maincategory","")
         cuisine = params.get("cuisine","")
         city = params.get("city","")
-        state = params.get("state","")
+        state_name = params.get("state","")
         country = params.get("country","")
-        neighborhood = params.get("neighborhood")
+        neighborhood = params.get("neighborhood","")
         keyword = params.get("keyword","")
         radius_km = params.get("radius_km","")
         limit = params.get("limit","")
         
-        
-        lat,longi = validate_coordinates(latitude,longitude)
-        
         radius = _tofloat(radius_km,default=5.0)
-        has_criteria = False
-        
-        longitude = params.get("longitude","")
-        for value in (lat,longi,category,maincategory,cuisine,city,state,country,neighborhood,keyword,radius,limit):
-            if value not in (None,"",[],{}):
-                has_criteria = True
             
         records = await search_nearbymerchant(
-                latitude = latitude or None,
-                longitude = longitude or None,
-                radius_km = radius or None,
+                latitude = lat,
+                longitude = longi,
+                radius_km = radius,
                 limit = _toint(limit),
             )
         for record in records:
             all_results.append(_to_llm_view(record))
-        return{
-            "nearby_merchantresults": all_results
-        }
+
+    return{
+        "nearby_merchantresults": all_results
+    }

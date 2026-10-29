@@ -407,6 +407,8 @@ def build_query_plan(
     
     
     message = normalize_text(message)
+    
+  
 
     plan = QueryPlan(
         original_query=message,
@@ -451,11 +453,34 @@ def build_query_plan(
     # 6. Resolve follow-ups only if the question actually looks
     #    context-dependent. History retrieval and the LLM rewrite
     #    with that history have already happened in SupervisorAgent.
-    if is_follow_up(message):
+      # 6. Resolve follow-ups only when the message actually
+    # depends on previous conversation history.
+
+    merchant_name = normalize_text(
+        getattr(decision, "merchant_name", "") or ""
+    )
+
+    # Check whether the merchant is explicitly named
+    # in the current user message.
+    merchant_is_explicit = bool(
+        merchant_name
+        and re.search(
+            rf"(?<!\w){re.escape(merchant_name)}(?!\w)",
+            message,
+            re.IGNORECASE,
+        )
+    )
+
+    rewritten_query = normalize_text(
+        getattr(decision, "rewritten_query", "") or ""
+    )
+
+    if is_follow_up(message) and not merchant_is_explicit:
+
         rewritten, history_needed, needs_clarification, question = (
             resolve_follow_up(
                 message=message,
-                rewritten_query=getattr(decision, "rewritten_query", ""),
+                rewritten_query=rewritten_query,
                 history=chat_history,
             )
         )
@@ -475,10 +500,9 @@ def build_query_plan(
         plan.standalone_query = rewritten
 
     else:
-        # For a self-contained query, trust the Supervisor's rewrite.
-        plan.standalone_query = normalize_text(
-            getattr(decision, "rewritten_query", "")
-        ) or message
+        # The message is self-contained, or the merchant
+        # is explicitly named in the current message.
+        plan.standalone_query = rewritten_query or message
 
     # 7. Use the LLM's expanded queries when supplied.
     llm_expanded_queries = getattr(
