@@ -19,7 +19,7 @@ _REDEMPTION_QUERY = """
                     R.LoadRedeemID,
                     R.GrossSale,
                     CAST(
-                        R.RedeemedOn AT Time ZONE 'UTC") AT TIME ZONE
+                        R.RedeemedOn AT Time ZONE 'UTC' AT TIME ZONE
                         CASE L.TimeZoneID
                         WHEN 1 THEN 'Eastern Standard Time'
                         WHEN 2 THEN 'Central Standard Time'

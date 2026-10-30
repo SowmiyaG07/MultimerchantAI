@@ -30,7 +30,7 @@ def create_access_token(customer:dict) -> str:
         "aud": VALID_AUDIENCE,
         "exp": expire,
         "CustomerId": str(customer["customer_id"]),
-        "WhiteLabelId": str(customer.get("white_label_id") or ""),
+        "WhiteLabelId": str(customer.get("whitelabel_id") or ""),
         _CLAIM_NAME: fullname,
         _CLAIM_EMAIL: customer.get("email", ""),
         _CLAIM_ROLE: "Customer",

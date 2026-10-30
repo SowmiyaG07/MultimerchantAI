@@ -38,14 +38,13 @@ class NearbySearchParams(BaseModel):
     # reads the user's device location from Agentstate, so the LLM
     # can never invent or change the coordinates.
     category: str = ""
-    maincategory: str = ""
     cuisine: str = ""
-    city: str = ""
-    state: str = ""
-    country: str = ""
-    neighborhood: str = ""
     keyword: str = ""
-    radius_km: float | None = None
+    radius_km: float | str | None = None
+    radius_miles: float | str | None = None
+    # Set only for "how far is <merchant>?" questions.
+    merchant_name: str = ""
+    travel_mode: str = ""
     limit: int | str = "10"
 
 

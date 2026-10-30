@@ -165,17 +165,38 @@ Output: Return a message indicating that more search details are required.
             all_results.append(_to_llm_view(record))
 
     if not searched:
+        message = "Please provide more details, such as a merchant name or city."
         return {
-            "merchant_results": "Please provide more details, such as a merchant name or city."
+            "merchant_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "MerchantAgent",
+                    "results": message
+                }
+            ]
         }
 
     if not all_results:
+        message = "No matching merchants were found."
         return {
-            "merchant_results": "No matching merchants were found."
+            "merchant_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "MerchantAgent",
+                    "results": message
+                }
+            ]
         }
 
+
     return {
-        "merchant_results": all_results
+        "merchant_results": all_results,
+        "all_agent_results": [
+        {
+            "agent": "MerchantAgent",
+            "results": all_results
+        }
+    ]
     }
 
 

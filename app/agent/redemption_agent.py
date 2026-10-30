@@ -27,12 +27,12 @@ def _to_date(value,field_name):
         return value
     try:
         text = str(value).strip()
-        dateoutput = date.fromisoformat(text[::10])
+        dateoutput = date.fromisoformat(text[:10])
         return dateoutput
     
     except(TypeError,ValueError):
         raise ValueError(
-            f"Invalid {field_name}:{value}"
+            f"Invalid {field_name}: {value}."
             "Expected a date in YYYY-MM-DD format"
         )
         
@@ -141,9 +141,15 @@ async def redemptionagent(state: Agentstate) -> dict :
     customer_id = state.get("customer_id")
 
     if _is_blank(customer_id):
-        return {
-            "redemption_results":
-            "Please log in to see your redemption history."
+            message = "Please log in to see your redemption history."
+            return {
+            "redemption_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "RedemptionAgent",
+                    "results": message
+                }
+            ]
         }
 
     # One redemption request per message.
@@ -159,23 +165,46 @@ async def redemptionagent(state: Agentstate) -> dict :
         records = await get_redemption_history(customer_id,from_value,to_value,merchant_name)
         
     except ValueError as error:
-        return {"redemption_results": str(error)}
-    
+        # Bad dates: show the message to the user
+        message = str(error)
+        return {
+            "redemption_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "RedemptionAgent",
+                    "results": message
+                }
+            ]
+        }
+
     except Exception:
         # Database or other errors: don't crash the whole graph
+        message = "Sorry, I couldn't load your redemption history right now."
         return {
-            "redemption_results":
-            "Sorry, I couldn't load your redemption history right now."
+            "redemption_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "RedemptionAgent",
+                    "results": message
+                }
+            ]
         }
-    
+
     period = (
         f"{from_value.isoformat()} to {to_value.isoformat()}"
     )
     if not records:
-        return {
-        "redemption_results":
-        f"You have no redemptions from {period}."
-    }
+            message = f"You have no redemptions from {period}."
+            return {
+            "redemption_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "RedemptionAgent",
+                    "results": message
+                }
+            ]
+        }
+
         
     count = len(records)
     
@@ -200,7 +229,13 @@ async def redemptionagent(state: Agentstate) -> dict :
 
     # Step 12: Return the results to the LangGraph workflow
     return {
-        "redemption_results": results
+        "redemption_results": results,
+        "all_agent_results": [
+        {
+            "agent": "RedemptionAgent",
+            "results": results
+        }
+    ]
     }
 
 

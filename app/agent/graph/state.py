@@ -1,5 +1,5 @@
-
-from typing import Any
+import operator
+from typing import Any,Annotated
 from typing_extensions import TypedDict
 from datetime import date
 
@@ -26,6 +26,7 @@ class Agentstate(TypedDict,total= False):
     needs_history : bool
     needs_clarification : bool
     chat_history : list[dict]
+    
     merchant_search_params : list[dict[str, Any]]
     offer_search_params : list[dict[str, Any]]
     nearby_agent_params: list[dict[str, Any]]
@@ -39,7 +40,11 @@ class Agentstate(TypedDict,total= False):
     redemption_results : str | list[dict[str, Any]]
     response_results : str
     
+    #Common Results -Reducer
+    all_agent_results: Annotated[list[dict[str, Any]], operator.add]
+    
     #Final response
+    response_results: str
     response : str
     error_message : str | None
     

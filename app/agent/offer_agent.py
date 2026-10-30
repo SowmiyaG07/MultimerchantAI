@@ -115,22 +115,43 @@ async def offer_agent(state: Agentstate) -> dict:
             result = _to_llm_view(record)
             all_results.append(result)
 
-    # Step 12: Check whether any search was performed
+      # Step 12: Check whether any search was performed
     if not searched:
+        message = (
+            "Please provide more details, such as "
+            "a merchant name, city or offer type."
+        )
         return {
-            "offer_results": (
-                "Please provide more details, such as "
-                "a merchant name, city or offer type."
-            )
+            "offer_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "OfferAgent",
+                    "results": message
+                }
+            ]
         }
 
     # Step 13: Check whether any offers were found
     if not all_results:
+        message = "No matching offers were found."
         return {
-            "offer_results": "No matching offers were found."
+            "offer_results": message,
+            "all_agent_results": [
+                {
+                    "agent": "OfferAgent",
+                    "results": message
+                }
+            ]
         }
+
 
     # Step 14: Return all matching offers
     return {
-        "offer_results": all_results
+        "offer_results": all_results,
+        "all_agent_results": [
+        {
+            "agent": "OfferAgent",
+            "results": all_results
+        }
+    ]
     }

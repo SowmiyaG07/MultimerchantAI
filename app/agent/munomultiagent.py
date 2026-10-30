@@ -168,7 +168,17 @@ async def SupervisorAgent(state:Agentstate):
             ]
 
     
-         
+    nearby_params = []
+    for item in decision.nearby_search_params:
+        nearby_params.append(item.model_dump())
+
+    # "How far is it?" -> the model may set merchant_name only.
+    if "nearby_agent" in plan.selected_agents:
+        if not nearby_params:
+            if decision.merchant_name:
+                nearby_params = [
+                    {"merchant_name": decision.merchant_name}
+                ]
     
 
 
@@ -186,10 +196,7 @@ async def SupervisorAgent(state:Agentstate):
         "offer_search_params": offer_params,
         # Decision fields *_search_params map to the state keys
         # nearby_agent_params / redemption_agent_params.
-        "nearby_agent_params": [
-                    item.model_dump()
-                    for item in decision.nearby_search_params
-                ],
+        "nearby_agent_params": nearby_params,
         "redemption_agent_params": [
                     item.model_dump()
                     for item in decision.redemption_search_params
@@ -377,11 +384,14 @@ If it uses "keyword" rather than "keywords", use "keyword".
 
 3. NEARBY AGENT
 
-Populate nearby_search_params whenever nearby_agent is selected
-and the user provides a usable nearby-search criterion.
+Select nearby_agent for two kinds of request:
+a) Places near the user ("near me", "nearby", "within 3 miles").
+   Fields: category, cuisine, keyword, radius_km or radius_miles, limit.
+b) Distance or travel time to ONE named merchant ("how far is X",
+   "how long to walk to X"). Fields: merchant_name, travel_mode
+   (drive, walk or bike).
 
-Extract supported filters such as category, cuisine, keyword,
-and radius_km.
+Use radius_miles when the user says miles, radius_km for km.
 
 Do not extract latitude or longitude. The application supplies
 the user's device location automatically.
@@ -425,6 +435,29 @@ Expected:
             "category": "restaurant",
             "radius_km": 5
         }}
+    ]
+}}
+
+Example:
+User: "Pizza places within 3 miles"
+
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "nearby_search_params": [
+        {{"keyword": "pizza", "radius_miles": 3}}
+    ]
+}}
+
+Example:
+User: "How long does it take to walk to Dreamland BBQ?"
+
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "nearby_search_params": [
+        {{"merchant_name": "Dreamland BBQ", "travel_mode": "walk"}}
     ]
 }}
 

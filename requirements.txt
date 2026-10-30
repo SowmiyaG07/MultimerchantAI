@@ -1,0 +1,29 @@
+# Python 3.12
+# System requirement (not pip): Microsoft ODBC Driver 18 for SQL Server
+
+# API
+fastapi==0.152.0
+uvicorn==0.54.0
+pydantic==2.14.1
+
+# LangGraph agents and the Ollama model
+langgraph==1.2.16
+langchain-ollama==1.1.0
+
+# Database (pyodbc is the driver behind SQLAlchemy's mssql+pyodbc URL)
+SQLAlchemy==2.1.5
+pyodbc==5.3.0
+
+# Chat history cache
+redis==8.1.0
+
+# Google Routes API calls
+httpx==0.28.1
+
+# Login: JWT tokens and 3DES password check
+python-jose==3.5.0
+pycryptodome==4.1.0
+
+# Settings and typing
+python-dotenv==1.2.4
+typing_extensions==4.16.0
