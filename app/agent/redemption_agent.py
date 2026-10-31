@@ -5,6 +5,9 @@ from app.agent.graph.state import Agentstate
 
 from app.tools.redemption_tool import get_redemption_history
 from app.utilities.StateMapping import OFFER_TYPE_LABELS
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 # Used when the user types "show my redemption history" without the
@@ -141,6 +144,7 @@ async def redemptionagent(state: Agentstate) -> dict :
     customer_id = state.get("customer_id")
 
     if _is_blank(customer_id):
+            logger.warning("redemption_search_skipped reason=no_customer_id")
             message = "Please log in to see your redemption history."
             return {
             "redemption_results": message,
@@ -165,6 +169,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         records = await get_redemption_history(customer_id,from_value,to_value,merchant_name)
         
     except ValueError as error:
+        logger.info("redemption_search_rejected customer_id=%s error=%s", customer_id, error)
         # Bad dates: show the message to the user
         message = str(error)
         return {
@@ -178,6 +183,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         }
 
     except Exception:
+        logger.exception("redemption_search_failed customer_id=%s", customer_id)
         # Database or other errors: don't crash the whole graph
         message = "Sorry, I couldn't load your redemption history right now."
         return {
@@ -194,6 +200,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         f"{from_value.isoformat()} to {to_value.isoformat()}"
     )
     if not records:
+            logger.info("redemption_search customer_id=%s results=0", customer_id)
             message = f"You have no redemptions from {period}."
             return {
             "redemption_results": message,
@@ -207,6 +214,8 @@ async def redemptionagent(state: Agentstate) -> dict :
 
         
     count = len(records)
+
+    logger.info("redemption_search customer_id=%s results=%d", customer_id, count)
     
     noun = "redemption" if count == 1 else "redemptions"
     

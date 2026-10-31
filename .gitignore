@@ -13,3 +13,8 @@ wheels/
 .env
 .env.*
 !.env.example
+logs/
+
+# Scratch notebooks
+*.ipynb
+.ipynb_checkpoints/

@@ -4,6 +4,9 @@ from app.agent.graph.state import Agentstate
 
 from app.utilities.StateMapping import _WEEKDAY_COLUMNS
 from app.tools.offer_search_tool import searchoffer_data
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 def _offer_valid_days(record: dict) -> str | None:
@@ -117,6 +120,7 @@ async def offer_agent(state: Agentstate) -> dict:
 
       # Step 12: Check whether any search was performed
     if not searched:
+        logger.info("offer_search_skipped reason=no_criteria")
         message = (
             "Please provide more details, such as "
             "a merchant name, city or offer type."
@@ -133,6 +137,7 @@ async def offer_agent(state: Agentstate) -> dict:
 
     # Step 13: Check whether any offers were found
     if not all_results:
+        logger.info("offer_search results=0")
         message = "No matching offers were found."
         return {
             "offer_results": message,
@@ -144,6 +149,8 @@ async def offer_agent(state: Agentstate) -> dict:
             ]
         }
 
+
+    logger.info("offer_search results=%d", len(all_results))
 
     # Step 14: Return all matching offers
     return {

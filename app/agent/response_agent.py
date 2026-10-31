@@ -1,45 +1,15 @@
 
 
 import json
-import os
 
 from app.agent.graph.state import Agentstate
 
-from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph,START,END
+from app.agent.munomultiagent import llm
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
-ollama_model = os.getenv("OLLAMA_MODEL")
-
-ollama_base_url = os.getenv("OLLAMA_BASE_URL")
-
-llm = ChatOllama(model=ollama_model,temperature = 0, num_ctx=8192,base_url=ollama_base_url,num_predict=1024)
-
-
-def _format_result(result) -> str:
-    """
-    Agents return either a message string or a list of records
-    (dicts). Turn either one into readable text.
-    """
-    if isinstance(result, str):
-        return result
-
-    if isinstance(result, list):
-        blocks = []
-        for record in result:
-            if isinstance(record, dict):
-                # Skip empty fields so the answer stays short.
-                lines = [
-                    f"{key}: {value}"
-                    for key, value in record.items()
-                    if value not in (None, "")
-                ]
-                blocks.append("\n".join(lines))
-            else:
-                blocks.append(str(record))
-        return "\n\n".join(blocks)
-
-    return str(result)
 
 
 async def ResponseAgent(state: Agentstate) -> dict:
@@ -110,8 +80,8 @@ INSTRUCTIONS:
      # 6. Call LLM
         llm_response = await llm.ainvoke(prompt)
         answer = (llm_response.content or "").strip()
-    except Exception as error:
-        print(f"RESPONSE AGENT LLM ERROR: {type(error).__name__}: {error}")
+    except Exception:
+        logger.exception("response_llm_failed using_fallback=true")
         answer = ""
 
     # 7. Return response to graph state

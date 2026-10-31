@@ -6,6 +6,9 @@ from app.tools.near_bymerchant_tool import (
     get_route,
     search_nearbymerchant,
 )
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 DEFAULT_RADIUS_KM = 5.0
@@ -237,6 +240,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
     location = _user_location(state)
 
     if location is None:
+        logger.info("nearby_location_required")
         return {
         "nearby_merchantresults": LOCATION_REQUIRED_MESSAGE,
 
@@ -256,7 +260,8 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         else:
             results = await _route_to_merchant(params, latitude, longitude)
 
-    except RuntimeError:
+    except RuntimeError as error:
+        logger.error("route_lookup_failed error=%s", error)
         # Google Maps key missing or the request failed.
         message = "Sorry, I couldn't calculate the distance right now."
         return {
@@ -270,6 +275,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         }
 
     except Exception:
+        logger.exception("nearby_search_failed")
         # Database or other errors: don't crash the whole graph.
         message = "Sorry, I couldn't search nearby places right now."
         return {
@@ -282,6 +288,12 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
             ]
         }
 
+
+    # A list is a radius search; a string is a route answer or a message.
+    if isinstance(results, list):
+        logger.info("nearby_search results=%d", len(results))
+    else:
+        logger.info("nearby_message")
 
     return {"nearby_merchantresults": results,
              "all_agent_results": [

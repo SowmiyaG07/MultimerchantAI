@@ -5,16 +5,7 @@ from jose import JWTError,jwt
 
 from uuid import uuid4
 
-# Must match ASP.NET JwtConstants exactly
-ISSUER_SIGNING_KEY = "digitalsavingsforsynergyapp"
-VALID_ISSUER = "iTabula.SynergyApp.MobileAppService"
-VALID_AUDIENCE = "iTabula.SynergyApp.MobileAppService"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours, same as ASP.NET
-# ASP.NET ClaimTypes full URIs
-_CLAIM_NAME = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-_CLAIM_EMAIL = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-_CLAIM_ROLE = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+
 
 
 def create_access_token(customer:dict) -> str:

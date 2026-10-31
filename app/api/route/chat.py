@@ -8,9 +8,12 @@ from app.agent.munomultiagent import ollama_model
 from app.agent.graph.workflow import multiagent
 from app.services.history_service import save_conversation_to_sql
 from app.cache.redis_cache import append_conversation_to_redis
+from app.utilities.log import Applogger
 
 
 chatrouter = APIRouter(tags=["chat"])
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 @chatrouter.post("/chat",response_model=chatresponse)
@@ -74,6 +77,14 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
 
         answer = result.get("response","")
 
+        logger.info(
+            "chat_completed trace_id=%s customer_id=%s agents=%s duration_ms=%.0f",
+            trace_id,
+            customerid,
+            result.get("selected_agent"),
+            (datetime.now() - created_at).total_seconds() * 1000,
+        )
+
         # Save the turn so the next follow-up can use it.
         # A failed save must not fail the chat response.
         try:
@@ -94,10 +105,10 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
                 answer=answer,
             )
 
-        except Exception as exc:
-            print(
-                f"[{trace_id}] HISTORY SAVE ERROR:"
-                f"{type(exc).__name__}:{exc}"
+        except Exception:
+            logger.exception(
+                "history_save_failed trace_id=%s customer_id=%s",
+                trace_id, customerid,
             )
 
         return {
@@ -108,10 +119,10 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
     
     except HTTPException:
         raise
-    except Exception as exc:
-        print(
-            f"[{trace_id}] CHAT ERROR:"
-            f"{type(exc).__name__}:{exc}"
+    except Exception:
+        logger.exception(
+            "chat_failed trace_id=%s customer_id=%s",
+            trace_id, customerid,
         )
         raise HTTPException(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,

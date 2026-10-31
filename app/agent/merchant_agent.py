@@ -3,6 +3,9 @@ from app.agent.graph.state import Agentstate
 
 from  app.tools.merchant_tool import searchmerchant
 from app.guardrails.inputguardrails import drop_invalid_state,drop_state_derived_from_address
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 def _to_int(value, default=10):
@@ -165,6 +168,7 @@ Output: Return a message indicating that more search details are required.
             all_results.append(_to_llm_view(record))
 
     if not searched:
+        logger.info("merchant_search_skipped reason=no_criteria")
         message = "Please provide more details, such as a merchant name or city."
         return {
             "merchant_results": message,
@@ -177,6 +181,7 @@ Output: Return a message indicating that more search details are required.
         }
 
     if not all_results:
+        logger.info("merchant_search results=0")
         message = "No matching merchants were found."
         return {
             "merchant_results": message,
@@ -188,6 +193,8 @@ Output: Return a message indicating that more search details are required.
             ]
         }
 
+
+    logger.info("merchant_search results=%d", len(all_results))
 
     return {
         "merchant_results": all_results,

@@ -15,6 +15,9 @@ from app.cache.redis_cache import load_history_from_redis,save_history_to_redis
 from app.services.history_service import load_relevant_history_from_sql
 
 from app.Query_understanding.queryexpansion import build_query_plan,history_is_sufficient,format_history_for_prompt
+from app.utilities.log import Applogger
+
+logger = Applogger.get_loggerdata(__name__)
 
 
 
@@ -80,6 +83,7 @@ async def SupervisorAgent(state:Agentstate):
     
        # 3. Reject requests outside the business domain.
     if not decision.business_related:
+        logger.info("supervisor_rejected reason=not_business_related")
         return {
             "selected_agent": [],
             "business_related": False,
@@ -127,6 +131,7 @@ async def SupervisorAgent(state:Agentstate):
 
     # 6. Stop and ask the user if clarification is needed.
     if plan.needs_clarification:
+        logger.info("supervisor_clarification needs_history=%s", plan.needs_history)
         return {
             "selected_agent": [],
             "business_related": plan.business_related,
@@ -181,6 +186,11 @@ async def SupervisorAgent(state:Agentstate):
                 ]
     
 
+
+    logger.info(
+        "supervisor_routed agents=%s needs_history=%s history_messages=%d",
+        plan.selected_agents, plan.needs_history, len(history),
+    )
 
     # 7. Return the query plan to the LangGraph workflow.
     return {
@@ -539,22 +549,7 @@ IMPORTANT VALIDATION RULES
 
 
 
-def Response_agent(state: Agentstate):
-    print("Response Agent: Combining results")
 
-    results = [
-        state.get('merchant_results',''),
-        state.get('offer_results',''),
-        state.get('nearby_merchantresults',''),
-        state.get('redemption_results',''),
-    ]
-
-    final_response = "\n".join(
-        [f"User query: {state.get('message','')}"]
-        + [result for result in results if result]
-    )
-
-    return {"response": final_response}
     
     
 
