@@ -26,10 +26,12 @@ async def ResponseAgent(state: Agentstate) -> dict:
     
         # Nothing came back
     if not all_agent_results:
+        print("FINAL RESPONSE:", "I couldn't find any relevant results.")
         return {"response": "I couldn't find any relevant results."}
 
     # One plain message (location, route, error): already the answer
     if len(all_agent_results) == 1 and isinstance(all_agent_results[0]["results"], str):
+        print("FINAL RESPONSE:", all_agent_results[0]["results"])
         return {"response": all_agent_results[0]["results"]}
 
     # Shown if the LLM fails
@@ -83,6 +85,8 @@ INSTRUCTIONS:
     except Exception:
         logger.exception("response_llm_failed using_fallback=true")
         answer = ""
+
+    print("FINAL RESPONSE:", answer or fallback)
 
     # 7. Return response to graph state
     return {

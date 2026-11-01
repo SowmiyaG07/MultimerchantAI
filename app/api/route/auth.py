@@ -1,3 +1,6 @@
+import asyncio
+
+import os
 import base64
 import hashlib
 from datetime import datetime
@@ -13,17 +16,18 @@ from app.services.customer_service import getcustomerid_email
 from app.database.database import get_connection
 
 from app.api.jwt import create_access_token
-from logging import Applogger
-_CRYPTO_SECRET = "ChiroTouchCodeNamedCairo"
+from app.utilities.log import Applogger
 
 authrouter = APIRouter(tags=["Authentication"])
 
 logger = Applogger.get_loggerdata(__name__)
 
 
+_CRYPTO_SECRET = os.getenv("_CRYPTO_SECRET")
+
 @authrouter.post("/login",response_model=Loginresponse,status_code=200)
 async def loginrequest(request:Loginrequest):
-    customer = getcustomerid_email(request.email)
+    customer = await asyncio.to_thread(getcustomerid_email, request.email)
     
     if customer is None:
         logger.warning("login_failed reason=unknown_email")
@@ -55,7 +59,7 @@ async def loginrequest(request:Loginrequest):
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = {
                             "code": "INVALID_CREDENTIALS",
-                            "message" : "Invalid password"
+                            "message" : "Invalid email or password"
                     },
             
         )

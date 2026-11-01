@@ -1,55 +1,58 @@
 
-from typing import TypedDict,Literal,Any
+from typing import TypedDict, Literal, Any
 from datetime import date
 from app.agent.graph.state import Agentstate
 from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph,START,END
+from langgraph.graph import StateGraph, START, END
 import os
-from pydantic import Field,BaseModel
+from pydantic import Field, BaseModel
 
 
-from app.agent.models.search_params import MearchantSearchparams,OfferSearchParams,NearbySearchParams,RedemptionSearchParams
+from app.agent.models.search_params import MearchantSearchparams, OfferSearchParams, NearbySearchParams, RedemptionSearchParams
 
-from app.cache.redis_cache import load_history_from_redis,save_history_to_redis
+from app.cache.redis_cache import load_history_from_redis, save_history_to_redis
 
 from app.services.history_service import load_relevant_history_from_sql
 
-from app.Query_understanding.queryexpansion import build_query_plan,history_is_sufficient,format_history_for_prompt
+from app.Query_understanding.queryexpansion import build_query_plan, history_is_sufficient, format_history_for_prompt
 from app.utilities.log import Applogger
 
 logger = Applogger.get_loggerdata(__name__)
 
 
+# Shown when the supervisor's LLM call fails.
+SUPERVISOR_ERROR_MESSAGE = (
+    "Sorry, I can't answer that right now. Please try again in a moment."
+)
 
 ollama_model = os.getenv("OLLAMA_MODEL")
 
 ollama_base_url = os.getenv("OLLAMA_BASE_URL")
 
 
-llm = ChatOllama(model=ollama_model,temperature = 0, num_ctx=8192,base_url=ollama_base_url,num_predict=1024)
+llm = ChatOllama(model=ollama_model, temperature=0, num_ctx=8192,
+                 base_url=ollama_base_url, num_predict=1024)
 
-
-
-    
 
 class SupervisorDecision(BaseModel):
-    business_related : bool
-    history_needed : bool
-    selected_agent : list[
+    business_related: bool
+    history_needed: bool
+    selected_agent: list[
         Literal[
             "merchant_agent",
             "offer_agent",
             "nearby_agent",
             "redemption_agent",
-            
+
         ]
     ]
-    rewritten_query : str
-    expanded_queries : list[str ] = Field(default_factory = list)
-    
+    rewritten_query: str
+    expanded_queries: list[str] = Field(default_factory=list)
+
     merchant_name: str | None = None
-     # Merchant tool arguments
-    merchant_search_params : list[MearchantSearchparams] = Field (default_factory=list)
+    # Merchant tool arguments
+    merchant_search_params: list[MearchantSearchparams] = Field(
+        default_factory=list)
     # Offer tool arguments
     offer_search_params: list[OfferSearchParams] = Field(
         default_factory=list
@@ -63,24 +66,62 @@ class SupervisorDecision(BaseModel):
     redemption_search_params: list[RedemptionSearchParams] = Field(
         default_factory=list
     )
-    needs_clarification : bool = False
-    clarification_question : str | None = None
-    
-    
-supervised_llm = llm.with_structured_output(SupervisorDecision)  
+    needs_clarification: bool = False
+    clarification_question: str | None = None
 
-    
-    
-async def SupervisorAgent(state:Agentstate):
-    message = state.get("message","").strip()
+
+supervised_llm = llm.with_structured_output(SupervisorDecision)
+
+
+async def SupervisorAgent(state: Agentstate):
+    message = state.get("message", "").strip()
+    print("USER QUESTION:", message)
     if not message:
-            return {
-                "selected_agent": [],
-                "response": "Please enter a question"
-            }
+        return {
+            "selected_agent": [],
+            "response": "Please enter a question"
+        }
     session_id = state.get("session_id")
-    decision = await decide_supervisor(message)
+    try:
+        decision = await decide_supervisor(message)
+    except Exception:
+        logger.exception("supervisor_llm_failed")
+        return {
+            "selected_agent": [],
+            "response": SUPERVISOR_ERROR_MESSAGE,
+        }
     
+    history = []
+    
+    if decision.history_needed:
+        history = await load_history_from_redis(session_id)
+    
+        if not history or not history_is_sufficient(message, history):
+            history = await load_relevant_history_from_sql(
+                    session_id=session_id,
+                    message=message,
+                    max_tokens=1500,
+                )
+    
+        if history:
+            await save_history_to_redis(
+                        session_id=session_id,
+                        history=history,
+                        ttl_seconds=1800,
+                    )
+    
+            # The first decision was made without history, so it could
+            # not resolve "it", "the first one", etc. Decide again with
+            # the history so rewritten_query becomes a standalone query.
+        if history:
+                try:
+                    decision = await decide_supervisor(message, history)
+                except Exception:
+                    logger.exception("supervisor_llm_failed with_history=true")
+                    return {
+                        "selected_agent": [],
+                        "response": SUPERVISOR_ERROR_MESSAGE,
+                    }
        # 3. Reject requests outside the business domain.
     if not decision.business_related:
         logger.info("supervisor_rejected reason=not_business_related")
@@ -95,30 +136,7 @@ async def SupervisorAgent(state:Agentstate):
             ),
         }
      # 4. Load conversation history only when needed.
-    history = []
-
-    if decision.history_needed:
-        history = await load_history_from_redis(session_id)
-
-        if not history or not history_is_sufficient(message, history):
-            history = await load_relevant_history_from_sql(
-                session_id=session_id,
-                message=message,
-                max_tokens=1500,
-            )
-
-            if history:
-                await save_history_to_redis(
-                    session_id=session_id,
-                    history=history,
-                    ttl_seconds=1800,
-                )
-
-        # The first decision was made without history, so it could
-        # not resolve "it", "the first one", etc. Decide again with
-        # the history so rewritten_query becomes a standalone query.
-        if history:
-            decision = await decide_supervisor(message, history)
+  
 
     # 5. Build the query plan using the LLM decision
     #    and conversation history.
@@ -126,12 +144,13 @@ async def SupervisorAgent(state:Agentstate):
         message=message,
         decision=decision,
         chat_history=history,
-        
+
     )
 
     # 6. Stop and ask the user if clarification is needed.
     if plan.needs_clarification:
-        logger.info("supervisor_clarification needs_history=%s", plan.needs_history)
+        logger.info("supervisor_clarification needs_history=%s",
+                    plan.needs_history)
         return {
             "selected_agent": [],
             "business_related": plan.business_related,
@@ -147,17 +166,17 @@ async def SupervisorAgent(state:Agentstate):
     # Small models often set merchant_name but leave
     # merchant_search_params empty. Fall back to searching by name
     # so the merchant agent still has a criterion.
-    
+
     merchant_params = []
     for item in decision.merchant_search_params:
         merchant_params.append(item.model_dump())
-    
+
     if "merchant_agent" in plan.selected_agents:
         if not merchant_params:
             if decision.merchant_name:
                 merchant_params = [
-                     {"name": decision.merchant_name}
-                    
+                    {"name": decision.merchant_name}
+
                 ]
     offer_params = []
     for item in decision.offer_search_params:
@@ -169,10 +188,9 @@ async def SupervisorAgent(state:Agentstate):
         if not offer_params:
             if decision.merchant_name:
                 offer_params = [
-                {"name": decision.merchant_name}
-            ]
+                    {"name": decision.merchant_name}
+                ]
 
-    
     nearby_params = []
     for item in decision.nearby_search_params:
         nearby_params.append(item.model_dump())
@@ -184,13 +202,13 @@ async def SupervisorAgent(state:Agentstate):
                 nearby_params = [
                     {"merchant_name": decision.merchant_name}
                 ]
-    
-
 
     logger.info(
         "supervisor_routed agents=%s needs_history=%s history_messages=%d",
         plan.selected_agents, plan.needs_history, len(history),
     )
+
+    print("SELECTED AGENT:", plan.selected_agents)
 
     # 7. Return the query plan to the LangGraph workflow.
     return {
@@ -208,18 +226,15 @@ async def SupervisorAgent(state:Agentstate):
         # nearby_agent_params / redemption_agent_params.
         "nearby_agent_params": nearby_params,
         "redemption_agent_params": [
-                    item.model_dump()
-                    for item in decision.redemption_search_params
-                ],
-        
+            item.model_dump()
+            for item in decision.redemption_search_params
+        ],
+
         "response": "",
     }
-  
-
-    
 
 
-async def decide_supervisor(message, history=None) -> SupervisorDecision :
+async def decide_supervisor(message, history=None) -> SupervisorDecision:
 
     history_section = ""
 
@@ -241,7 +256,6 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision :
   needs_clarification to true and explain what needs
   clarification.
 """
-
 
     prompt = f"""
     You are the supervisor for an AI Merchant Assistant.
@@ -273,6 +287,65 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision :
    - Return the resolved name in merchant_name.
    - If the merchant cannot be identified from the available
   context and is necessary to answer, request clarification.
+  
+IMPORTANT: IMPLICIT MERCHANT REFERENCES
+
+A question can be business-related even when the merchant name
+is not explicitly mentioned.
+
+The following expressions indicate possible references to
+a previously discussed merchant:
+
+- the restaurant
+- the restaurant's
+- that restaurant
+- its
+- their
+- the merchant
+- the merchant's
+- that store
+- the first one
+
+Examples:
+
+Example 1:
+User: What is the full address of Dreamland BBQ?
+Assistant: Dreamland BBQ is located in Alabama.
+
+User: What is the restaurant's contact phone number?
+
+Expected decision:
+business_related = true
+history_needed = true
+
+Example 2:
+User: What is the restaurant's website?
+
+Expected decision:
+business_related = true
+history_needed = true
+
+Example 3:
+User: What is Dreamland BBQ's website?
+
+Expected decision:
+business_related = true
+history_needed = false
+
+Example 4:
+User: What is Python?
+
+Expected decision:
+business_related = false
+history_needed = false
+
+IMPORTANT:
+- Restaurant contact details, phone numbers, addresses,
+  websites and business information are business-related.
+- Do not classify a restaurant information request as
+  unrelated simply because the merchant name is missing.
+- If the merchant is not explicitly mentioned but an implicit
+  reference exists, set history_needed = true.
 
 AGENT SELECTION RULES
 
@@ -545,19 +618,5 @@ IMPORTANT VALIDATION RULES
 """
 
     decision = await supervised_llm.ainvoke(prompt)
+    
     return decision
-
-
-
-
-    
-    
-
-    
-
-    
-
-
-
-
-    

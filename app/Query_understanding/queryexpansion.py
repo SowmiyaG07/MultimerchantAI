@@ -104,9 +104,11 @@ FOLLOW_UP_PATTERNS = [
     # they point back to something, so "offers that are above 20%"
     # and "is there a discount" are not follow-ups.
     (
-        r"\b(?:that|this|those|these) (?:one|ones|restaurant|restaurants"
-        r"|merchant|merchants|store|stores|shop|shops|place|places"
-        r"|brand|brands|offer|offers|deal|deals)\b"
+        r"\b(?:the|that|this|those|these)"
+        r"(?:one|ones|restaurant|restaurants"
+        r"restaurant|restaurants|merchant|merchants|store|stores|shop|shops|place|places"
+        r"|brand|brands|offer|offers|deal|deals)"
+        r"(?:'s)?\b"
     ),
     r"\b(?:from|at|near|in|to) there\b",
     r"\bwhat about\b",

@@ -146,6 +146,7 @@ async def redemptionagent(state: Agentstate) -> dict :
     if _is_blank(customer_id):
             logger.warning("redemption_search_skipped reason=no_customer_id")
             message = "Please log in to see your redemption history."
+            print("REDEMPTION RESULTS:", message)
             return {
             "redemption_results": message,
             "all_agent_results": [
@@ -172,6 +173,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         logger.info("redemption_search_rejected customer_id=%s error=%s", customer_id, error)
         # Bad dates: show the message to the user
         message = str(error)
+        print("REDEMPTION RESULTS:", message)
         return {
             "redemption_results": message,
             "all_agent_results": [
@@ -186,6 +188,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         logger.exception("redemption_search_failed customer_id=%s", customer_id)
         # Database or other errors: don't crash the whole graph
         message = "Sorry, I couldn't load your redemption history right now."
+        print("REDEMPTION RESULTS:", message)
         return {
             "redemption_results": message,
             "all_agent_results": [
@@ -202,6 +205,7 @@ async def redemptionagent(state: Agentstate) -> dict :
     if not records:
             logger.info("redemption_search customer_id=%s results=0", customer_id)
             message = f"You have no redemptions from {period}."
+            print("REDEMPTION RESULTS:", message)
             return {
             "redemption_results": message,
             "all_agent_results": [
@@ -237,6 +241,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         results.append(_to_llm_view(record))
 
     # Step 12: Return the results to the LangGraph workflow
+    print("REDEMPTION RESULTS:", results)
     return {
         "redemption_results": results,
         "all_agent_results": [

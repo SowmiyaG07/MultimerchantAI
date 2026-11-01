@@ -241,6 +241,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
 
     if location is None:
         logger.info("nearby_location_required")
+        print("NEARBY RESULTS:", LOCATION_REQUIRED_MESSAGE)
         return {
         "nearby_merchantresults": LOCATION_REQUIRED_MESSAGE,
 
@@ -264,6 +265,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         logger.error("route_lookup_failed error=%s", error)
         # Google Maps key missing or the request failed.
         message = "Sorry, I couldn't calculate the distance right now."
+        print("NEARBY RESULTS:", message)
         return {
             "nearby_merchantresults": message,
             "all_agent_results": [
@@ -278,6 +280,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         logger.exception("nearby_search_failed")
         # Database or other errors: don't crash the whole graph.
         message = "Sorry, I couldn't search nearby places right now."
+        print("NEARBY RESULTS:", message)
         return {
             "nearby_merchantresults": message,
             "all_agent_results": [
@@ -295,6 +298,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
     else:
         logger.info("nearby_message")
 
+    print("NEARBY RESULTS:", results)
     return {"nearby_merchantresults": results,
              "all_agent_results": [
         {

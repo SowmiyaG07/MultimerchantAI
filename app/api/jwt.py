@@ -1,22 +1,37 @@
-from datetime import datetime,timedelta,timezone
+from datetime import datetime, timedelta, timezone
 
 
-from jose import JWTError,jwt
+from jose import JWTError, jwt
 
 from uuid import uuid4
 
+import os
+
+VALID_ISSUER = os.getenv("VALID_ISSUER")
+
+VALID_AUDIENCE = os.getenv("VALID_AUDIENCE")
+
+_CLAIM_NAME = os.getenv("_CLAIM_NAME")
+_CLAIM_EMAIL = os.getenv("_CLAIM_EMAIL")
+_CLAIM_ROLE = os.getenv("_CLAIM_ROLE")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+
+ISSUER_SIGNING_KEY = os.getenv("ISSUER_SIGNING_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 
+def create_access_token(customer: dict) -> str:
 
-def create_access_token(customer:dict) -> str:
-    
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    fullname = f"{customer.get('first_name','')} {customer.get('last_name','')}".strip()
-    
+    expire = datetime.now(timezone.utc) + \
+        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    fullname = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(
+    )
+
     payload = {
-        "sub" : fullname,
-        "jti" : uuid4().hex,
+        "sub": fullname,
+        "jti": uuid4().hex,
         "iss": VALID_ISSUER,
         "aud": VALID_AUDIENCE,
         "exp": expire,
@@ -27,7 +42,6 @@ def create_access_token(customer:dict) -> str:
         _CLAIM_ROLE: "Customer",
     }
     return jwt.encode(payload, ISSUER_SIGNING_KEY, algorithm=ALGORITHM)
-
 
 
 def decode_access_token(token: str) -> str:
@@ -49,4 +63,3 @@ def decode_access_token(token: str) -> str:
 
     except JWTError as exc:
         raise ValueError("Invalid or expired token") from exc
-    

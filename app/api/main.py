@@ -4,7 +4,7 @@ from app.api.route.auth import authrouter
 from app.api.route.chat import chatrouter
 from app.api.route.health import healthrouter
 import time
-from logging import Applogger
+from app.utilities.log import Applogger
 from pydantic import BaseModel
 from app.database.database import get_connection
 from sqlalchemy import text

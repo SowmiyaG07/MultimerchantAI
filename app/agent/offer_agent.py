@@ -102,16 +102,31 @@ async def offer_agent(state: Agentstate) -> dict:
         # Step 9: A valid search is going to be performed
         searched = True
         # Step 10: Call the offer search tool
-        records = await searchoffer_data(
-            name=name,
-            offer_type=offer_type,
-            min_percent=min_percent,
-            max_percent=max_percent,
-            city=city,
-            state=state_name,
-            keyword=keyword,
-            limit=limit
-        )
+        try:
+            records = await searchoffer_data(
+                name=name,
+                offer_type=offer_type,
+                min_percent=min_percent,
+                max_percent=max_percent,
+                city=city,
+                state=state_name,
+                keyword=keyword,
+                limit=limit
+            )
+        except Exception:
+            # Database or other errors: don't crash the whole graph.
+            logger.exception("offer_search_failed")
+            message = "Sorry, I couldn't search offers right now."
+            print("OFFER RESULTS:", message)
+            return {
+                "offer_results": message,
+                "all_agent_results": [
+                    {
+                        "agent": "OfferAgent",
+                        "results": message
+                    }
+                ]
+            }
 
         # Step 11: Convert each result and store it
         for record in records:
@@ -125,6 +140,7 @@ async def offer_agent(state: Agentstate) -> dict:
             "Please provide more details, such as "
             "a merchant name, city or offer type."
         )
+        print("OFFER RESULTS:", message)
         return {
             "offer_results": message,
             "all_agent_results": [
@@ -139,6 +155,7 @@ async def offer_agent(state: Agentstate) -> dict:
     if not all_results:
         logger.info("offer_search results=0")
         message = "No matching offers were found."
+        print("OFFER RESULTS:", message)
         return {
             "offer_results": message,
             "all_agent_results": [
@@ -153,6 +170,7 @@ async def offer_agent(state: Agentstate) -> dict:
     logger.info("offer_search results=%d", len(all_results))
 
     # Step 14: Return all matching offers
+    print("OFFER RESULTS:", all_results)
     return {
         "offer_results": all_results,
         "all_agent_results": [

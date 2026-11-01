@@ -3,15 +3,35 @@ import os
 
 from dotenv import load_dotenv
 from redis import asyncio as aioredis
+from redis.exceptions import RedisError
+
+from app.utilities.log import Applogger
 
 load_dotenv()
 
+logger = Applogger.get_loggerdata(__name__)
+
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-redis_client = aioredis.from_url(redis_url, decode_responses=True)
+# Redis is only a cache, so give up quickly and let SQL answer.
+redis_client = aioredis.from_url(
+    redis_url,
+    decode_responses=True,
+    socket_connect_timeout=2,
+    socket_timeout=2,
+)
 
 
 async def load_history_from_redis(session_id: str | None) -> list[dict]:
+    """Returns [] when Redis is down, so the caller falls back to SQL."""
+    try:
+        return await _read_history(session_id)
+    except RedisError as error:
+        logger.warning("redis_unavailable action=load error=%s", error)
+        return []
+
+
+async def _read_history(session_id: str | None) -> list[dict]:
     if not session_id:
         return []
 
@@ -41,11 +61,14 @@ async def save_history_to_redis(
 
     key = f"chat_history:{session_id}"
 
-    await redis_client.set(
-        key,
-        json.dumps(history),
-        ex=ttl_seconds,
-    )
+    try:
+        await redis_client.set(
+            key,
+            json.dumps(history),
+            ex=ttl_seconds,
+        )
+    except RedisError as error:
+        logger.warning("redis_unavailable action=save error=%s", error)
 
 
 async def append_conversation_to_redis(
@@ -65,7 +88,12 @@ async def append_conversation_to_redis(
     if not session_id or not question or not answer:
         return
 
-    history = await load_history_from_redis(session_id)
+    # A failed read must not overwrite the cache with only this turn.
+    try:
+        history = await _read_history(session_id)
+    except RedisError as error:
+        logger.warning("redis_unavailable action=append error=%s", error)
+        return
 
     history.append({"role": "user", "content": question})
     history.append({"role": "assistant", "content": answer})

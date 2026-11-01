@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter,Depends,HTTPException,status
 from app.api.schema.chatrequest import chatresponse,chatrequest
 from app.services.customer_service import getcustomerid_email,getcustomerid
@@ -22,7 +24,7 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
     try :
         
         
-        customer = getcustomerid(customerid)
+        customer = await asyncio.to_thread(getcustomerid, customerid)
         if customer is None:
                 raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -32,7 +34,17 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
                     "trace_id": trace_id,
                 },
             )
-
+        # 2. Check whether customer is active
+        if not customer["active"]:
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+            "code": "CUSTOMER_INACTIVE",
+            "message": "Your account is inactive. Please contact support.",
+            "trace_id": trace_id,
+        },
+    )
+        
         if not customer["external_id"]:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

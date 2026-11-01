@@ -249,7 +249,8 @@ async def get_route(
             response = await client.post(ROUTES_API_URL, json=body, headers=headers)
             response.raise_for_status()
     except httpx.HTTPError as error:
-        raise RuntimeError(f"Google Routes API request failed: {error}") from error
+        raise RuntimeError(
+            f"Google Routes API request failed: {error}") from error
 
     routes = response.json().get("routes") or []
     if not routes:

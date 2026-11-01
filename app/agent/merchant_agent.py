@@ -149,19 +149,34 @@ Output: Return a message indicating that more search details are required.
             continue
 
         searched = True
-        records = await searchmerchant(
-            name=name or None,
-            category=category or None,
-            city=city or None,
-            state=valid_state or None,
-            country=country or None,
-            address=address or None,
-            neighborhood=neighborhood or None,
-            keyword=keyword or None,
-            description=description or None,
-            limit=_to_int(limit),
-            merchant_names=None,
-        )
+        try:
+            records = await searchmerchant(
+                name=name or None,
+                category=category or None,
+                city=city or None,
+                state=valid_state or None,
+                country=country or None,
+                address=address or None,
+                neighborhood=neighborhood or None,
+                keyword=keyword or None,
+                description=description or None,
+                limit=_to_int(limit),
+                merchant_names=None,
+            )
+        except Exception:
+            # Database or other errors: don't crash the whole graph.
+            logger.exception("merchant_search_failed")
+            message = "Sorry, I couldn't search merchants right now."
+            print("MERCHANT RESULTS:", message)
+            return {
+                "merchant_results": message,
+                "all_agent_results": [
+                    {
+                        "agent": "MerchantAgent",
+                        "results": message
+                    }
+                ]
+            }
 
         # Convert each database row into a user-relevant record.
         for record in records:
@@ -170,6 +185,7 @@ Output: Return a message indicating that more search details are required.
     if not searched:
         logger.info("merchant_search_skipped reason=no_criteria")
         message = "Please provide more details, such as a merchant name or city."
+        print("MERCHANT RESULTS:", message)
         return {
             "merchant_results": message,
             "all_agent_results": [
@@ -183,6 +199,7 @@ Output: Return a message indicating that more search details are required.
     if not all_results:
         logger.info("merchant_search results=0")
         message = "No matching merchants were found."
+        print("MERCHANT RESULTS:", message)
         return {
             "merchant_results": message,
             "all_agent_results": [
@@ -196,6 +213,7 @@ Output: Return a message indicating that more search details are required.
 
     logger.info("merchant_search results=%d", len(all_results))
 
+    print("MERCHANT RESULTS:", all_results)
     return {
         "merchant_results": all_results,
         "all_agent_results": [
