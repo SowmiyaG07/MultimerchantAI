@@ -5,17 +5,19 @@ query_expansion.py
 Independent query-understanding and expansion module
 for a Merchant Assistant.
 
-Responsibilities:
-1. Understand user intent.
-2. Detect follow-up references.
-3. Rewrite follow-up questions.
-4. Decompose multi-intent questions.
-5. Expand queries conservatively.
-6. Select specialist agents.
-7. Return a structured query plan.
 
-This module does NOT execute database tools or call agents.
-The supervisor is responsible for execution.
+Deterministic checks around the Supervisor LLM decision.
+
+Responsibilities:
+1. Validate the agents the LLM selected.
+2. Check the LLM's rewrite of a follow-up question.
+3. Expand search queries conservatively.
+4. Return a structured query plan.
+
+The Supervisor LLM decides whether a question is a follow-up
+(history_needed). This module never overrides that decision.
+
+This module does NOT call the LLM, Redis, SQL or any agent.
 """
 
 from __future__ import annotations
@@ -45,40 +47,7 @@ INTENT_TO_AGENT  = {
 
 VALID_AGENTS = set(INTENT_TO_AGENT.values())
 
-# Terms that suggest the user is asking about your business.
-# Adjust these according to the actual capabilities of your app.
-BUSINESS_TERMS = {
-    "merchant",
-    "merchants",
-    "brand",
-    "brands",
-    "restaurant",
-    "restaurants",
-    "store",
-    "stores",
-    "shop",
-    "shops",
-    "offer",
-    "offers",
-    "discount",
-    "discounts",
-    "deal",
-    "deals",
-    "redeem",
-    "redeemed",
-    "redemption",
-    "redemptions",
-    "transaction",
-    "transactions",
-    "cashback",
-    "gift card",
-    "gift cards",
-    "nearby",
-    "near me",
-    "closest",
-    "location",
-    "locations",
-}
+
 
 
 # Expand these terms only when the user's intent supports it.
@@ -94,29 +63,26 @@ AGENT_TO_INTENT = {
     agent: intent for intent, agent in INTENT_TO_AGENT.items()
 }
 
-FOLLOW_UP_PATTERNS = [
+REFERENCE_PATTERNS = [
     r"\bit\b",
     r"\bits\b",
     r"\bthey\b",
     r"\bthem\b",
     r"\btheir\b",
-    # "that", "this", "those", "these" and "there" count only when
-    # they point back to something, so "offers that are above 20%"
-    # and "is there a discount" are not follow-ups.
+    # "that/this/those/these" + a noun: "that offer", "those places".
+    # \s+ is required between the two groups.
     (
-        r"\b(?:the|that|this|those|these)"
-        r"(?:one|ones|restaurant|restaurants"
-        r"restaurant|restaurants|merchant|merchants|store|stores|shop|shops|place|places"
-        r"|brand|brands|offer|offers|deal|deals)"
-        r"(?:'s)?\b"
+        r"\b(?:that|this|those|these)\s+"
+        r"(?:one|ones|restaurants?|merchants?|stores?|shops?|places?"
+        r"|brands?|offers?|deals?|transactions?|redemptions?)(?:'s)?\b"
     ),
-    r"\b(?:from|at|near|in|to) there\b",
-    r"\bwhat about\b",
-    r"\bhow about\b",
+    # "the" only with a singular noun: "the restaurant" points back,
+    # "the restaurants near me" is a new search.
+    r"\bthe\s+(?:restaurant|merchant|store|shop|place|offer|deal)(?:'s)?\b",
+    r"\b(?:from|at|near|in|to|walk|drive|bike|go|get) there\b",
     r"\bthe (?:first|second|third|last) one\b",
-    r"\bmore about\b",
-    r"\bshow me more\b",
 ]
+
 
 
 
@@ -161,14 +127,14 @@ def normalize_text(text: str | None) -> str:
 
 
 
-def is_follow_up(message : str) -> bool :
+def still_has_reference(message : str) -> bool :
     """
     Detect whether a question may depend on earlier context.
 
     This is a heuristic, not an intent classifier.
     """
     text = normalize_text(message).lower()
-    for pattern in FOLLOW_UP_PATTERNS:
+    for pattern in REFERENCE_PATTERNS:
         if re.search(pattern,text):
             return True
     
@@ -294,6 +260,7 @@ def format_history_for_prompt(history: Any) -> str:
 def resolve_follow_up(
     message: str,
     rewritten_query: str | None,
+    merchant_name : str,
     history: Any,
 ) -> tuple[str, bool, bool, str | None]:
     """
@@ -314,30 +281,37 @@ def resolve_follow_up(
 
     message = normalize_text(message)
 
-    if not is_follow_up(message):
-        return message, False, False, None
+    
 
     if not conversation(history):
         return (
             message,
             True,
-            True,
+            
             "Could you clarify which previous result you mean?",
         )
 
     rewritten = normalize_text(rewritten_query)
+    
+    if not rewritten:
+        return (message, True, "Which merchant from the previous results…?")
+
+    if contains_name(rewritten, merchant_name):    # ← new
+        return rewritten, False, None
 
     # Do not guess when the LLM could not replace the reference,
     # for example "the first one" when the latest answer had no list.
-    if not rewritten or is_follow_up(rewritten):
+    
+   
+    if still_has_reference(rewritten):
         return (
             message,
-            True,
+          
             True,
             "Which merchant from the previous results are you referring to?",
         )
 
-    return rewritten, True, False, None
+    return rewritten, False, None
 
 
 # ============================================================
@@ -381,6 +355,11 @@ def expand_query(
     # Preserve order and remove duplicates.
     return list(dict.fromkeys(variants))
 
+
+def contains_name(text: str, name: str) -> bool:
+    if not text or not name:
+        return False
+    return bool(re.search(rf"(?<!\w){re.escape(name)}(?!\w)", text, re.IGNORECASE))
 
 # ============================================================
 # 8. Build the final query plan
@@ -464,32 +443,26 @@ def build_query_plan(
 
     # Check whether the merchant is explicitly named
     # in the current user message.
-    merchant_is_explicit = bool(
-        merchant_name
-        and re.search(
-            rf"(?<!\w){re.escape(merchant_name)}(?!\w)",
-            message,
-            re.IGNORECASE,
-        )
-    )
+    
+    
+   
 
     rewritten_query = normalize_text(
         getattr(decision, "rewritten_query", "") or ""
     )
 
-    if is_follow_up(message) and not merchant_is_explicit:
+    if plan.needs_history and not contains_name(message, merchant_name):
 
-        rewritten, history_needed, needs_clarification, question = (
+        standalone, needs_clarification, question = (
             resolve_follow_up(
                 message=message,
                 rewritten_query=rewritten_query,
+                merchant_name = merchant_name,
                 history=chat_history,
             )
         )
 
-        plan.needs_history = (
-            plan.needs_history or history_needed
-        )
+       
 
         if needs_clarification:
             plan.needs_clarification = True
@@ -499,7 +472,7 @@ def build_query_plan(
             )
             return plan
 
-        plan.standalone_query = rewritten
+        plan.standalone_query = standalone
 
     else:
         # The message is self-contained, or the merchant

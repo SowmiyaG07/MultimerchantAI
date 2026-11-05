@@ -1,0 +1,1430 @@
+[
+  {
+    "id": "TC001",
+    "category": "merchant",
+    "question": "What is the full address of Dreamland BBQ?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC002",
+    "category": "merchant",
+    "question": "In which city is Dreamland BBQ located?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC003",
+    "category": "merchant",
+    "question": "whats the phone number for dreamland bbq",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC004",
+    "category": "merchant",
+    "question": "What type of cuisine does The Marx Bros Cafe serve?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "The Marx Bros Cafe",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC005",
+    "category": "merchant",
+    "question": "Can you tell me a little about Cafe Du Monde? I heard it's been around forever.",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC006",
+    "category": "merchant",
+    "question": "Which social media platforms is Chris' Famous Hotdogs on? I'd like to follow them.",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Chris' Famous Hotdogs",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC007",
+    "category": "merchant",
+    "question": "What kind of business is Firestone Complete Auto Care?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC008",
+    "category": "merchant",
+    "question": "What ZIP code is 24 Hour Fitness in?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC009",
+    "category": "merchant",
+    "question": "What business is located at 929 Peachtree St NE in Atlanta?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC010",
+    "category": "merchant",
+    "question": "I'm visiting Tuscaloosa. Is there a famous BBQ place I should check out?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC011",
+    "category": "merchant",
+    "question": "I'm craving Alaskan seafood. Is there a fine dining spot in downtown Anchorage?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC012",
+    "category": "merchant",
+    "question": "Do you know a hair salon in Atlanta near Peachtree Street?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC013",
+    "category": "merchant",
+    "question": "Is there a Firestone Complete Auto Care location in Nashville?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC014",
+    "category": "merchant",
+    "question": "What's the contact number for UW Medical Center - Montlake?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "UW Medical Center - Montlake",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC015",
+    "category": "merchant",
+    "question": "What category is PRYSM Chicago listed under?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "PRYSM Chicago",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC016",
+    "category": "merchant",
+    "question": "What is Pizzeria Bianco known for?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC017",
+    "category": "merchant",
+    "question": "pls give me van michael salon phone no",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC018",
+    "category": "merchant",
+    "question": "What is the restaurant's contact phone number?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Tell me about Dreamland BBQ"
+      },
+      {
+        "role": "assistant",
+        "content": "Dreamland BBQ is an Alabama rib house in Tuscaloosa, running since 1958."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC019",
+    "category": "merchant",
+    "question": "Do they have any social media pages?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Where is The Marx Bros Cafe?"
+      },
+      {
+        "role": "assistant",
+        "content": "The Marx Bros Cafe is at 627 W 3rd Ave, Anchorage, AK 99501."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "The Marx Bros Cafe",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC020",
+    "category": "merchant",
+    "question": "what neighborhood is it in?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is Pizzeria Bianco known for?"
+      },
+      {
+        "role": "assistant",
+        "content": "Pizzeria Bianco is a James Beard Award-winning wood-fired pizzeria famous for the Wiseguy pie."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC021",
+    "category": "merchant",
+    "question": "And how can I call them before I go?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Where can I find 24 Hour Fitness?"
+      },
+      {
+        "role": "assistant",
+        "content": "24 Hour Fitness is at 7715 Balboa Ave, San Diego, CA 92111."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC022",
+    "category": "merchant",
+    "question": "Tell me more about the first one.",
+    "history": [
+      {
+        "role": "user",
+        "content": "Recommend a place in New Orleans and one in Montgomery"
+      },
+      {
+        "role": "assistant",
+        "content": "1. Cafe Du Monde in New Orleans, known for beignets. 2. Chris' Famous Hotdogs in Montgomery, known for chili dogs."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC023",
+    "category": "merchant",
+    "question": "What is its phone number?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC024",
+    "category": "merchant",
+    "question": "Where is the restaurant located?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC025",
+    "category": "merchant",
+    "question": "Tell me about Pizzeria Bianco and whether they have any deals right now.",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC026",
+    "category": "offer",
+    "question": "What is the current offer at Dreamland BBQ?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC027",
+    "category": "offer",
+    "question": "Is the Dreamland BBQ offer valid on weekends?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC028",
+    "category": "offer",
+    "question": "When does the 24 Hour Fitness guest pass offer end?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC029",
+    "category": "offer",
+    "question": "any deals at Chris' Famous Hotdogs if i buy 2 dogs?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Chris' Famous Hotdogs",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC030",
+    "category": "offer",
+    "question": "Show me pizza offers",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC031",
+    "category": "offer",
+    "question": "Which places give a discount on oil changes?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC032",
+    "category": "offer",
+    "question": "Are there any salon offers for first-time customers?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC033",
+    "category": "offer",
+    "question": "What offers are available in Phoenix?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC034",
+    "category": "offer",
+    "question": "I have a Get1Card. Can I get anything free at a gym?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC035",
+    "category": "offer",
+    "question": "Can I use the Pizzeria Bianco offer for takeout?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC036",
+    "category": "offer",
+    "question": "Does the Pizzeria Bianco discount apply to a small pizza?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC037",
+    "category": "offer",
+    "question": "Four of us are going to Cafe Du Monde and ordering four cafe au laits. How many free beignet orders do we get?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC038",
+    "category": "offer",
+    "question": "How many times a day can I download the PRYSM Chicago offer?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "PRYSM Chicago",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC039",
+    "category": "offer",
+    "question": "I'm getting to PRYSM Chicago around midnight. Will the free cover still work?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "PRYSM Chicago",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC040",
+    "category": "offer",
+    "question": "Do hospital gift shops give discounts with Get1Card?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC041",
+    "category": "offer",
+    "question": "Show me offers with at least 20% off",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC042",
+    "category": "offer",
+    "question": "Which offers are expiring soon?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC043",
+    "category": "offer",
+    "question": "What do I need to do to redeem the Firestone Complete Auto Care offer?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC044",
+    "category": "offer",
+    "question": "Do they have any special deals right now?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Tell me about Dreamland BBQ"
+      },
+      {
+        "role": "assistant",
+        "content": "Dreamland BBQ is an Alabama rib house in Tuscaloosa, known for hickory-smoked ribs."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC045",
+    "category": "offer",
+    "question": "how long is that offer good for?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What offer does Van Michael Salon have?"
+      },
+      {
+        "role": "assistant",
+        "content": "Van Michael Salon offers 20% off any first-time service."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC046",
+    "category": "offer",
+    "question": "Can I use it on a Sunday?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Is there a gym deal in San Diego?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes, 24 Hour Fitness offers a free guest day pass with your Get1Card."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC047",
+    "category": "offer",
+    "question": "What if I only order one drink?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What's the deal at Cafe Du Monde?"
+      },
+      {
+        "role": "assistant",
+        "content": "Cafe Du Monde gives one free order of beignets with any two cafe au laits, dine-in only."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC048",
+    "category": "offer",
+    "question": "Is the offer valid on weekends?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC049",
+    "category": "offer",
+    "question": "What's the deal there?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC050",
+    "category": "offer",
+    "question": "What's the phone number for Firestone Complete Auto Care, and how much can I save on an oil change there?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC051",
+    "category": "nearby",
+    "question": "Find restaurants near me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC052",
+    "category": "nearby",
+    "question": "any good pizza places nearby?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC053",
+    "category": "nearby",
+    "question": "Show me gyms within 5 miles",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC054",
+    "category": "nearby",
+    "question": "Is there a hair salon close to where I am right now?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC055",
+    "category": "nearby",
+    "question": "I need an auto shop near me, my car is making a weird noise",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC056",
+    "category": "nearby",
+    "question": "Restaurants within 2 km",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC057",
+    "category": "nearby",
+    "question": "Find Italian restaurants nearby",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC058",
+    "category": "nearby",
+    "question": "wat bakery is closest to me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC059",
+    "category": "nearby",
+    "question": "Any nightclubs around here?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC060",
+    "category": "nearby",
+    "question": "How far is Dreamland BBQ from me?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC061",
+    "category": "nearby",
+    "question": "How long would it take to walk to Chris' Famous Hotdogs?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Chris' Famous Hotdogs",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC062",
+    "category": "nearby",
+    "question": "How long is the drive to Firestone Complete Auto Care?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC063",
+    "category": "nearby",
+    "question": "Can I bike to Cafe Du Monde from here?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC064",
+    "category": "nearby",
+    "question": "I'm hungry and walking around. What's the closest place I can grab food?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC065",
+    "category": "nearby",
+    "question": "Show me the 3 nearest restaurants",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC066",
+    "category": "nearby",
+    "question": "Find coffee shops within 1 mile of me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC067",
+    "category": "nearby",
+    "question": "How far is it from me?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is Pizzeria Bianco known for?"
+      },
+      {
+        "role": "assistant",
+        "content": "Pizzeria Bianco is a wood-fired pizzeria in Downtown Phoenix."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC068",
+    "category": "nearby",
+    "question": "can i walk there?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Where is Van Michael Salon?"
+      },
+      {
+        "role": "assistant",
+        "content": "Van Michael Salon is at 929 Peachtree St NE, Atlanta, GA 30309."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC069",
+    "category": "nearby",
+    "question": "How long to drive to the first one?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Find restaurants near me"
+      },
+      {
+        "role": "assistant",
+        "content": "Here are restaurants near you: 1. Cafe Du Monde (0.4 miles) 2. Pizzeria Bianco (1.2 miles)."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC070",
+    "category": "nearby",
+    "question": "How far is it?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC071",
+    "category": "nearby",
+    "question": "How long to walk there?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC072",
+    "category": "nearby",
+    "question": "Find restaurants near me that have offers",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC073",
+    "category": "nearby",
+    "question": "Show offers available at restaurants near me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC074",
+    "category": "nearby",
+    "question": "Any gyms within 10 miles with a free guest pass deal?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC075",
+    "category": "nearby",
+    "question": "How far is Pizzeria Bianco, and do they have a deal on large pizzas?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC076",
+    "category": "redemption",
+    "question": "Show my redemption history",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC077",
+    "category": "redemption",
+    "question": "What have I redeemed recently?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC078",
+    "category": "redemption",
+    "question": "Show my redemptions from the last 7 days",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC079",
+    "category": "redemption",
+    "question": "What did I redeem last month?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC080",
+    "category": "redemption",
+    "question": "List my transactions from March 2026",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC081",
+    "category": "redemption",
+    "question": "Did I redeem anything at Dreamland BBQ?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC082",
+    "category": "redemption",
+    "question": "show my redemptions at Cafe Du Monde",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC083",
+    "category": "redemption",
+    "question": "When was the last time I used my Get1Card at Pizzeria Bianco?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC084",
+    "category": "redemption",
+    "question": "How many offers have I redeemed this year?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC085",
+    "category": "redemption",
+    "question": "my last 5 transactions pls",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC086",
+    "category": "redemption",
+    "question": "Show my redemptions between 2026-09-01 and 2026-09-30",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC087",
+    "category": "redemption",
+    "question": "Did I use any offers yesterday?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC088",
+    "category": "redemption",
+    "question": "What's the status of my gift card redemption?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC089",
+    "category": "redemption",
+    "question": "Has my most recent gift card redemption gone through?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC090",
+    "category": "redemption",
+    "question": "How much have I saved with Get1Card so far?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC091",
+    "category": "redemption",
+    "question": "I think I redeemed the PRYSM Chicago free cover last weekend. Can you check?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "PRYSM Chicago",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC092",
+    "category": "redemption",
+    "question": "what did i redem on 15th october",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC093",
+    "category": "redemption",
+    "question": "What did I get at Firestone that time?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Show my recent redemptions"
+      },
+      {
+        "role": "assistant",
+        "content": "Your recent redemptions: Firestone Complete Auto Care on 2026-10-12, Cafe Du Monde on 2026-10-20."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC094",
+    "category": "redemption",
+    "question": "And the month before?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What did I redeem last month?"
+      },
+      {
+        "role": "assistant",
+        "content": "In October 2026 you redeemed 3 offers: Cafe Du Monde, 24 Hour Fitness and Van Michael Salon."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC095",
+    "category": "redemption",
+    "question": "When exactly did I use the gym one?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What did I redeem last month?"
+      },
+      {
+        "role": "assistant",
+        "content": "In October 2026 you redeemed 3 offers: Cafe Du Monde, 24 Hour Fitness and Van Michael Salon."
+      }
+    ],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC096",
+    "category": "redemption",
+    "question": "Did I already redeem it?",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC097",
+    "category": "redemption",
+    "question": "Show me that transaction again",
+    "history": [],
+    "expected": {
+      "selected_agent": [],
+      "merchant_name": null,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "TC098",
+    "category": "redemption",
+    "question": "Did I redeem anything at Cafe Du Monde, and is their beignet offer still running?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC099",
+    "category": "redemption",
+    "question": "Which places have I redeemed offers at, and do any of them have new deals now?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "TC100",
+    "category": "redemption",
+    "question": "I redeemed at Van Michael Salon last month. What's their phone number? I want to book again.",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  }
+]

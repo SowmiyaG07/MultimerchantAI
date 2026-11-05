@@ -288,72 +288,72 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision:
    - If the merchant cannot be identified from the available
   context and is necessary to answer, request clarification.
   
-IMPORTANT: IMPLICIT MERCHANT REFERENCES
 
-A question can be business-related even when the merchant name
-is not explicitly mentioned.
 
-The following expressions indicate possible references to
-a previously discussed merchant:
+FOLLOW-UP DETECTION (history_needed)
 
-- the restaurant
-- the restaurant's
-- that restaurant
-- its
-- their
-- the merchant
-- the merchant's
-- that store
-- the first one
+You do NOT see the previous conversation here. Decide only
+from the wording whether the question depends on it.
 
-Examples:
+Set history_needed = true when the question:
+- uses a reference instead of a name: it, its, they, them,
+  their, there, that/this/the restaurant, that offer,
+  that place, that transaction, the first one, the gym one
+- continues an earlier topic: "and the month before?",
+  "what about Saturday?", "tell me more"
+- is incomplete on its own: "What if I only order one drink?",
+  "Can I use it on a Sunday?"
 
-Example 1:
-User: What is the full address of Dreamland BBQ?
-Assistant: Dreamland BBQ is located in Alabama.
-
-User: What is the restaurant's contact phone number?
-
-Expected decision:
-business_related = true
-history_needed = true
-
-Example 2:
-User: What is the restaurant's website?
-
-Expected decision:
-business_related = true
-history_needed = true
-
-Example 3:
-User: What is Dreamland BBQ's website?
-
-Expected decision:
-business_related = true
-history_needed = false
-
-Example 4:
-User: What is Python?
-
-Expected decision:
-business_related = false
-history_needed = false
+Set history_needed = false when the question names everything
+it needs, even if it contains "it" or "they" about something
+named in the same sentence:
+- "How long would it take to walk to Chris' Famous Hotdogs?"
+- "Which places have I redeemed at, and do any of them have deals?"
 
 IMPORTANT:
+- A follow-up question is business_related = true. Never mark
+  a question unrelated just because it is short or unclear;
+  if it could refer to an earlier merchant, offer, location or
+  redemption, set history_needed = true instead.
 - Restaurant contact details, phone numbers, addresses,
   websites and business information are business-related.
-- Do not classify a restaurant information request as
-  unrelated simply because the merchant name is missing.
-- If the merchant is not explicitly mentioned but an implicit
-  reference exists, set history_needed = true.
+
+Examples:
+User: "Do they have any social media pages?"
+-> business_related = true, history_needed = true
+
+User: "Can I use it on a Sunday?"
+-> business_related = true, history_needed = true
+
+User: "What is Dreamland BBQ's website?"
+-> business_related = true, history_needed = false
+
+User: "What is Python?"
+-> business_related = false, history_needed = false
 
 AGENT SELECTION RULES
 
-- Select only agents relevant to the user's intent.
-- Multiple agents may be selected when a request requires
-  multiple kinds of information.
+- merchant_agent: details of a merchant (address, city, ZIP,
+  neighborhood, phone, cuisine, category, description, social
+  media) and searches like "a BBQ place in Tuscaloosa" or
+  "a hair salon in Atlanta".
+- offer_agent: offers, deals, discounts, offer rules
+  (weekends, takeout, expiry, download limits) and HOW to
+  redeem an offer.
+- nearby_agent: ONLY relative to the user's own location:
+  "near me", "nearby", "closest", "around here", "within 5
+  miles", "how far is X", "walk/drive/bike to X".
+- redemption_agent: ONLY the user's OWN past redemptions and
+  transactions ("my redemptions", "did I redeem", "last month").
+- Select more than one agent only when the user clearly asks
+  for more than one kind of information:
+  "restaurants near me with offers" -> offer_agent, nearby_agent
+  "Pizzeria Bianco's phone and its deal" -> merchant_agent, offer_agent
+- Do NOT add merchant_agent to an offer question just because
+  it names a merchant: "deals at Dreamland BBQ" -> offer_agent.
 - Do not classify unrelated questions as business-related.
 - Return a structured response matching the supplied schema.
+
 
 SEARCH PARAMETER RULES
 
@@ -375,7 +375,50 @@ General:
 1. MERCHANT AGENT
 
 Populate merchant_search_params with at least one parameter
-when merchant_agent is selected and the user provides a
+when merchant_agent is selected and theFOLLOW-UP DETECTION (history_needed)
+
+You do NOT see the previous conversation here. Decide only
+from the wording whether the question depends on it.
+
+Set history_needed = true when the question:
+- uses a reference instead of a name: it, its, they, them,
+  their, there, that/this/the restaurant, that offer,
+  that place, that transaction, the first one, the gym one
+- continues an earlier topic: "and the month before?",
+  "what about Saturday?", "tell me more"
+- is incomplete on its own: "What if I only order one drink?",
+  "Can I use it on a Sunday?"
+
+Set history_needed = false when the question names everything
+it needs, even if it contains "it" or "they" about something
+named in the same sentence:
+- "How long would it take to walk to Chris' Famous Hotdogs?"
+- "Which places have I redeemed at, and do any of them have deals?"
+
+IMPORTANT:
+- A follow-up question is business_related = true. Never mark
+  a question unrelated just because it is short or unclear;
+  if it could refer to an earlier merchant, offer, location or
+  redemption, set history_needed = true instead.
+- Restaurant contact details, phone numbers, addresses,
+  websites and business information are business-related.
+
+Examples:
+User: "Do they have any social media pages?"
+-> business_related = true, history_needed = true
+
+User: "Can I use it on a Sunday?"
+-> business_related = true, history_needed = true
+
+User: "What is Dreamland BBQ's website?"
+-> business_related = true, history_needed = false
+
+
+
+
+User: "What is Python?"
+-> business_related = false, history_needed = false
+ user provides a
 merchant name or another usable merchant-search criterion.
 
 Extract only fields supported by the merchant-search schema,
@@ -413,6 +456,11 @@ Expected:
         }}
     ]
 }}
+
+Examples
+ What is the address of Cafe De Monde?
+ Directly asking address Expected is full address of that merchant
+
 
 2. OFFER AGENT
 
@@ -484,7 +532,17 @@ if it is not supplied by the application.
 
 Example:
 User: "Find restaurants near me"
+c) Location details of ONE named merchant
+Examples:
+What is the location of Dreamland BBQ?
+What are the latitude and longitude of this restaurant?
+Give me the restaurant's coordinates.
 
+Where is the restaurant located?
+
+Fields:
+merchant_name
+requested_fields: requested location information, such as latitude, longitude, address, or all_location_details.
 Expected:
 {{
     "selected_agent": ["nearby_agent"],
@@ -543,6 +601,19 @@ Expected:
         {{"merchant_name": "Dreamland BBQ", "travel_mode": "walk"}}
     ]
 }}
+
+Example:
+User : Asking about location details latitude and longitude region details ?
+Expected:
+{{
+    "selected_agent": ["nearby_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "nearby_search_params": [
+        {{"merchant_name": "Dreamland BBQ", "travel_mode": "walk"}}
+    ]
+}}
+
+
 
 4. REDEMPTION AGENT
 
