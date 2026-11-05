@@ -204,7 +204,15 @@ async def redemptionagent(state: Agentstate) -> dict :
     )
     if not records:
             logger.info("redemption_search customer_id=%s results=0", customer_id)
-            message = f"You have no redemptions from {period}."
+            if _is_blank(merchant_name):
+                message = f"You have no redemptions from {period}."
+            else:
+                message = (
+                    f"No redemptions at {merchant_name} were found "
+                    f"from {period}."
+                )
+
+           
             print("REDEMPTION RESULTS:", message)
             return {
             "redemption_results": message,

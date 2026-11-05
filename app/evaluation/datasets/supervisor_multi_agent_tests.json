@@ -1,0 +1,970 @@
+[
+  {
+    "id": "MTC001",
+    "category": "merchant",
+    "agent_count": 1,
+    "combination": "M",
+    "question": "What is the phone number of Dreamland BBQ?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC002",
+    "category": "merchant",
+    "agent_count": 1,
+    "combination": "M",
+    "question": "Which neighborhood is Pizzeria Bianco in?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC003",
+    "category": "merchant",
+    "agent_count": 1,
+    "combination": "M",
+    "question": "Do you know a hair salon in Atlanta?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC004",
+    "category": "merchant",
+    "agent_count": 1,
+    "combination": "M",
+    "question": "Does Cafe Du Monde have an Instagram page?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC005",
+    "category": "offer",
+    "agent_count": 1,
+    "combination": "O",
+    "question": "What deals does Dreamland BBQ have right now?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC006",
+    "category": "offer",
+    "agent_count": 1,
+    "combination": "O",
+    "question": "Show me pizza offers with at least 20% off",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC007",
+    "category": "offer",
+    "agent_count": 1,
+    "combination": "O",
+    "question": "Is the Cafe Du Monde offer valid for takeout?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC008",
+    "category": "offer",
+    "agent_count": 1,
+    "combination": "O",
+    "question": "How do I redeem the Firestone Complete Auto Care oil change offer?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC009",
+    "category": "nearby",
+    "agent_count": 1,
+    "combination": "N",
+    "question": "Find BBQ restaurants near me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC010",
+    "category": "nearby",
+    "agent_count": 1,
+    "combination": "N",
+    "question": "How far is Pizzeria Bianco from my location?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC011",
+    "category": "nearby",
+    "agent_count": 1,
+    "combination": "N",
+    "question": "Any coffee shops within 2 miles of me?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC012",
+    "category": "nearby",
+    "agent_count": 1,
+    "combination": "N",
+    "question": "How long would it take to drive to 24 Hour Fitness?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC013",
+    "category": "redemption",
+    "agent_count": 1,
+    "combination": "R",
+    "question": "Show my redemption history",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC014",
+    "category": "redemption",
+    "agent_count": 1,
+    "combination": "R",
+    "question": "What did I redeem last month?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC015",
+    "category": "redemption",
+    "agent_count": 1,
+    "combination": "R",
+    "question": "Have I ever redeemed an offer at Van Michael Salon?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC016",
+    "category": "redemption",
+    "agent_count": 1,
+    "combination": "R",
+    "question": "How much have I saved from my redemptions this year?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC017",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + O",
+    "question": "What is Dreamland BBQ's phone number, and do they have any deals?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC018",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + O",
+    "question": "Tell me about Pizzeria Bianco and what offers they have",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC019",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + O",
+    "question": "What's the website for Van Michael Salon, and is there a discount on haircuts?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC020",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + O",
+    "question": "Give me the address of Firestone Complete Auto Care and its current promotions",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC021",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + N",
+    "question": "What cuisine does The Marx Bros Cafe serve, and how far is it from me?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "The Marx Bros Cafe",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC022",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + N",
+    "question": "Give me Cafe Du Monde's phone number and how long it takes to walk there from here",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC023",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + N",
+    "question": "Tell me about 24 Hour Fitness and how far it is from my location",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC024",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + N",
+    "question": "What is PRYSM Chicago's website, and how long would it take me to drive there?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "PRYSM Chicago",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC025",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + R",
+    "question": "I redeemed at Van Michael Salon last month. What's their phone number?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC026",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + R",
+    "question": "Did I redeem anything at Dreamland BBQ, and what is their address?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC027",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + R",
+    "question": "Show my last redemption at Pizzeria Bianco and tell me what kind of food they serve",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC028",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "M + R",
+    "question": "When did I last redeem at Cafe Du Monde, and do they have a Facebook page?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC029",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + N",
+    "question": "Find restaurants near me that have offers",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC030",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + N",
+    "question": "Any gyms within 10 miles with a free guest pass deal?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC031",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + N",
+    "question": "How far is Pizzeria Bianco from me, and do they have a deal on large pizzas?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC032",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + N",
+    "question": "Show me discounts at coffee shops nearby",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC033",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + R",
+    "question": "Did I redeem anything at Cafe Du Monde, and is their beignet offer still running?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC034",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + R",
+    "question": "Which places have I redeemed offers at, and do any of them have new deals now?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC035",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + R",
+    "question": "Have I already used the Firestone Complete Auto Care oil change offer, and is it still available?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC036",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "O + R",
+    "question": "Show my redemptions from last month and any new offers at those merchants",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC037",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "N + R",
+    "question": "Which merchants I have redeemed at are closest to me?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC038",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "N + R",
+    "question": "How far is the last place I redeemed an offer at?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC039",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "N + R",
+    "question": "Did I redeem at 24 Hour Fitness this year, and how far is it from my location?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC040",
+    "category": "multi",
+    "agent_count": 2,
+    "combination": "N + R",
+    "question": "Show my recent redemptions that are within 5 miles of me",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC041",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + N",
+    "question": "Tell me about Dreamland BBQ, how far it is from me, and what deals they have",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC042",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + N",
+    "question": "What's Pizzeria Bianco's phone number, any current offers, and how long to drive there?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC043",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + N",
+    "question": "Give me Cafe Du Monde's address, its offers, and walking time from my location",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC044",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + N",
+    "question": "What services does Firestone Complete Auto Care offer, do they have a discount, and how far is it?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent"
+      ],
+      "merchant_name": "Firestone Complete Auto Care",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC045",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + R",
+    "question": "Did I redeem at Dreamland BBQ before? Also give me their phone number and current deals",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC046",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + R",
+    "question": "Show my Van Michael Salon redemptions, their website, and any new salon offers there",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC047",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + R",
+    "question": "Have I used the Pizzeria Bianco offer already? What is their address and their other deals?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC048",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + O + R",
+    "question": "What did I redeem at Cafe Du Monde, what is their address, and are there more offers?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC049",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + N + R",
+    "question": "I redeemed at Van Michael Salon last month. What's their phone number and how far is it from me?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC050",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + N + R",
+    "question": "Did I redeem at 24 Hour Fitness this year? Give me their address and driving time from here",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "24 Hour Fitness",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC051",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + N + R",
+    "question": "Show my last Dreamland BBQ redemption, their website, and how long to walk there",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC052",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "M + N + R",
+    "question": "When did I last redeem at Pizzeria Bianco, what cuisine do they serve, and how far are they?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC053",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "O + N + R",
+    "question": "Find restaurants near me with offers I haven't redeemed yet",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC054",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "O + N + R",
+    "question": "Which places have I redeemed at that are nearby and have new deals?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC055",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "O + N + R",
+    "question": "Any gyms within 5 miles with offers, and have I redeemed at any of them before?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": null,
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC056",
+    "category": "multi",
+    "agent_count": 3,
+    "combination": "O + N + R",
+    "question": "How far is Cafe Du Monde, is their offer still active, and did I already redeem it?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC057",
+    "category": "multi",
+    "agent_count": 4,
+    "combination": "M + O + N + R",
+    "question": "Tell me about Dreamland BBQ, its current deals, how far it is from me, and whether I've redeemed there before",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Dreamland BBQ",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC058",
+    "category": "multi",
+    "agent_count": 4,
+    "combination": "M + O + N + R",
+    "question": "Give me Pizzeria Bianco's phone number, its offers, the driving time from my location, and my past redemptions there",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Pizzeria Bianco",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC059",
+    "category": "multi",
+    "agent_count": 4,
+    "combination": "M + O + N + R",
+    "question": "I want to visit Cafe Du Monde: what's the address, how long to walk there, any active offers, and did I already use one?",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Cafe Du Monde",
+      "needs_clarification": false
+    }
+  },
+  {
+    "id": "MTC060",
+    "category": "multi",
+    "agent_count": 4,
+    "combination": "M + O + N + R",
+    "question": "For Van Michael Salon, show their website, current discounts, distance from me, and my redemption history there",
+    "history": [],
+    "expected": {
+      "selected_agent": [
+        "merchant_agent",
+        "offer_agent",
+        "nearby_agent",
+        "redemption_agent"
+      ],
+      "merchant_name": "Van Michael Salon",
+      "needs_clarification": false
+    }
+  }
+]

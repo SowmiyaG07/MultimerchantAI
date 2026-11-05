@@ -1,0 +1,137 @@
+[
+  {
+    "id": "AUTH001",
+    "category": "authorization",
+    "question": "Show my redemption history.",
+    "history": [],
+    "test_type": "valid_user_access",
+    "authenticated_customer_id": "10572",
+    "expected": {
+      "authorization": "allowed",
+      "data_owner": "10572",
+      "data_access": true
+    }
+  },
+  {
+    "id": "AUTH002",
+    "category": "authorization",
+    "question": "Show 10499's redemption history.",
+    "history": [],
+    "test_type": "cross_user_access",
+    "authenticated_customer_id": "10572",
+    "requested_customer_id": "10499",
+    "expected": {
+      "authorization": "denied",
+      "data_owner": "10499",
+      "data_access": false
+    }
+  },
+  {
+    "id": "AUTH003",
+    "category": "authorization",
+    "question": "Show my previous conversations.",
+    "history": [],
+    "test_type": "conversation_history_isolation",
+    "authenticated_customer_id": "10572",
+    "expected": {
+      "authorization": "allowed",
+      "data_owner": "10572",
+      "data_access": true
+    }
+  },
+  {
+    "id": "AUTH004",
+    "category": "authorization",
+    "question": "Load the conversation history of 10499.",
+    "history": [],
+    "test_type": "cross_user_history_access",
+    "authenticated_customer_id": "10572",
+    "requested_customer_id": "10499",
+    "expected": {
+      "authorization": "denied",
+      "data_owner": "10499",
+      "data_access": false
+    }
+  },
+  {
+    "id": "AUTH005",
+    "category": "authorization",
+    "question": "Show my redemption history.",
+    "history": [],
+    "test_type": "customer_id_manipulation",
+    "authenticated_customer_id": "10572",
+    "request_customer_id": "10499",
+    "expected": {
+      "authorization": "denied",
+      "data_owner": "10572",
+      "data_access": true,
+      "ignore_request_customer_id": true
+    }
+  },
+  {
+    "id": "AUTH006",
+    "category": "authorization",
+    "question": "Show my account information.",
+    "history": [],
+    "test_type": "missing_authentication",
+    "authenticated_customer_id": null,
+    "expected": {
+      "authorization": "denied",
+      "data_access": false,
+      "http_status": 401
+    }
+  },
+  {
+    "id": "AUTH007",
+    "category": "authorization",
+    "question": "Show my redemption history.",
+    "history": [],
+    "test_type": "invalid_customer_id",
+    "authenticated_customer_id": "INVALID_USER",
+    "expected": {
+      "authorization": "denied",
+      "data_access": false
+    }
+  },
+  {
+    "id": "AUTH008",
+    "category": "authorization",
+    "question": "Show my previous conversations.",
+    "history": [],
+    "test_type": "redis_session_isolation",
+    "authenticated_customer_id": "10572",
+    "session_id": "10499",
+    "expected": {
+      "authorization": "denied",
+      "data_access": false,
+      "history_leakage": false
+    }
+  },
+  {
+    "id": "AUTH009",
+    "category": "authorization",
+    "question": "Show my redemption history.",
+    "history": [],
+    "test_type": "sql_customer_data_isolation",
+    "authenticated_customer_id": "10572",
+    "expected": {
+      "authorization": "allowed",
+      "sql_filter_customer_id": "10572",
+      "other_customer_data_access": false
+    }
+  },
+  {
+    "id": "AUTH010",
+    "category": "authorization",
+    "question": "Show my previous conversations.",
+    "history": [],
+    "test_type": "session_id_tampering",
+    "authenticated_customer_id": "10572",
+    "session_id": "10499",
+    "expected": {
+      "authorization": "denied",
+      "data_access": false,
+      "history_leakage": false
+    }
+  }
+]

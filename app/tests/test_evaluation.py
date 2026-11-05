@@ -15,7 +15,7 @@ DATASET_PATH = (
     / "app"
     / "evaluation"
     / "datasets"
-    / "supervisor_routing_tests.json"
+    / "supervisor_multi_agent_tests.json"
 )
 
 with open(DATASET_PATH, "r", encoding="utf-8") as file:

@@ -202,6 +202,20 @@ async def SupervisorAgent(state: Agentstate):
                 nearby_params = [
                     {"merchant_name": decision.merchant_name}
                 ]
+    redemption_params =[]
+    for item in decision.redemption_search_params:
+        redemption_params.append(item.model_dump())
+    if "redemption_agent" in plan.selected_agents:
+        if not redemption_params:
+            if decision.merchant_name:
+                redemption_params = [
+                {"merchant_name": decision.merchant_name}
+            ]
+            else:
+                redemption_params = [{}]
+    
+        
+       
 
     logger.info(
         "supervisor_routed agents=%s needs_history=%s history_messages=%d",
@@ -225,10 +239,8 @@ async def SupervisorAgent(state: Agentstate):
         # Decision fields *_search_params map to the state keys
         # nearby_agent_params / redemption_agent_params.
         "nearby_agent_params": nearby_params,
-        "redemption_agent_params": [
-            item.model_dump()
-            for item in decision.redemption_search_params
-        ],
+        "redemption_agent_params": redemption_params,
+        
 
         "response": "",
     }
@@ -615,10 +627,72 @@ Expected:
 
 
 
-4. REDEMPTION AGENT
 
-Populate redemption_search_params whenever redemption_agent
-is selected for the user's own redemption-history request.
+REDEMPTION AGENT
+
+PURPOSE:
+The redemption_agent retrieves the authenticated customer's
+own redemption history from the database.
+
+WHEN TO SELECT:
+Select redemption_agent whenever the user asks to check,
+verify, retrieve, or discuss their own previous redemptions.
+
+Redemption intent can appear in questions, statements,
+or combined requests.
+
+Recognize all the following patterns:
+
+- Have I redeemed this offer?
+- Have I already used this offer?
+- Did I use the Pizzeria Bianco offer?
+- Have I used this merchant's offer before?
+- When did I last redeem an offer?
+- Show my redemption history.
+- Check my previous redemptions.
+- I redeemed at Van Michael Salon last month.
+- I used the offer at this restaurant.
+- Was this offer already redeemed by me?
+- Can you check whether I have used this deal?
+
+IMPORTANT INTENT RULES:
+
+1. Do not require the user to explicitly say
+   "check my redemption history".
+
+2. Statements such as "I redeemed at Van Michael Salon
+   last month" must be recognized as redemption-related
+   when the user asks for information about that redemption
+   or merchant.
+
+3. If the user asks whether they have already used an offer,
+   ALWAYS select redemption_agent.
+
+4. If the user asks about redemption history AND other
+   merchant, offer, or location information, select
+   redemption_agent alongside all other required agents.
+
+5. Do not select redemption_agent merely because the word
+   "redeem" appears in a general offer description.
+   The intent must concern the authenticated customer's
+   own redemption history.
+
+6. Do not let merchant_agent, offer_agent, or nearby_agent
+   replace redemption_agent when redemption intent exists.
+
+7. An explicitly mentioned merchant name must be extracted
+   directly from the current user message. Do not ask for
+   clarification when the merchant is identifiable.
+
+8. Do not interpret a statement about a past redemption
+   as merely background information when the user is asking
+   for verification or related redemption information.
+
+PARAMETER EXTRACTION:
+
+Populate redemption_search_params whenever
+redemption_agent is selected for the user's own
+redemption-history request.
 
 Extract only supported filters:
 - from_date
@@ -634,7 +708,10 @@ supplies the authenticated customer's identity automatically.
 If no filters are required, use an empty parameter object
 inside the list if permitted by the schema.
 
-Example:
+Examples:
+
+Examples:
+
 User: "Show my redemption history"
 
 Expected:
@@ -645,34 +722,72 @@ Expected:
     ]
 }}
 
-Example (if today's date were 2026-01-15):
-User: "Show my redemptions from the last 7 days"
+User: "Have I already used the Firestone Complete Auto Care
+oil change offer?"
 
 Expected:
 {{
     "selected_agent": ["redemption_agent"],
     "redemption_search_params": [
-        {{
-            "from_date": "2026-01-08",
-            "to_date": "2026-01-15"
-        }}
+        {{"merchant_name": "Firestone Complete Auto Care"}}
     ]
 }}
 
-Example:
-User: "Show my redemptions at Dreamland BBQ"
+User: "Did I redeem at Dreamland BBQ before? What is their
+address and their other deals?"
 
 Expected:
 {{
-    "selected_agent": ["redemption_agent"],
+    "selected_agent": ["merchant_agent", "offer_agent", "redemption_agent"],
+    "merchant_name": "Dreamland BBQ",
+    "merchant_search_params": [{{"name": "Dreamland BBQ"}}],
+    "offer_search_params": [{{"name": "Dreamland BBQ"}}],
     "redemption_search_params": [
         {{"merchant_name": "Dreamland BBQ"}}
     ]
 }}
+
+User: "I redeemed at Cafe Du Monde last month. What's their
+phone number and how far is it from me?"
+
+Expected:
+{{
+    "selected_agent": ["merchant_agent", "nearby_agent", "redemption_agent"],
+    "merchant_name": "Cafe Du Monde",
+    "merchant_search_params": [{{"name": "Cafe Du Monde"}}],
+    "nearby_search_params": [{{"merchant_name": "Cafe Du Monde"}}],
+    "redemption_search_params": [
+        {{"merchant_name": "Cafe Du Monde",
+          "from_date": "<first day of last month>",
+          "to_date": "<last day of last month>"}}
+    ]
+}}
+
+
 IMPORTANT VALIDATION RULES
+
+- When a user asks multiple independent questions in one
+message, select ALL agents required to answer them.
+
+- Do not select only the agent responsible for the
+last question or the main subject.
+
+- Each selected agent must have its corresponding
+search parameters populated according to its schema.
+
+- Do not omit redemption_agent when redemption intent
+is detected, even if merchant_agent, offer_agent,
+or nearby_agent are also required
 
 - Each selected agent must have its corresponding parameter
   list populated when a usable criterion is available.
+  When multiple agents are selected:
+- Consider the results from every selected agent.
+- Do not ignore successful results from any agent.
+- For redemption queries, report whether the customer has redeemed the offer.
+- For offer queries, report whether the offer exists and its validity.
+- When both agents are selected, combine both findings into one answer.
+- Never interpret an empty redemption result as an empty offer result.
 - Unselected agents must have empty parameter lists.
 - Parameter objects must match their corresponding Pydantic
   models and actual tool inputs.
@@ -687,6 +802,7 @@ IMPORTANT VALIDATION RULES
     {history_section}
      User message: {message}
 """
+
 
     decision = await supervised_llm.ainvoke(prompt)
     
