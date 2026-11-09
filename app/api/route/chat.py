@@ -5,7 +5,7 @@ from app.api.schema.chatrequest import chatresponse,chatrequest
 from app.services.customer_service import getcustomerid_email,getcustomerid
 import uuid
 from datetime import datetime
-from app.api.dependencies import get_current_customer_id
+from app.api.dependencies import check_chat_rate_limit
 from app.agent.munomultiagent import ollama_model
 from app.agent.graph.workflow import multiagent
 from app.services.history_service import save_conversation_to_sql
@@ -19,7 +19,7 @@ logger = Applogger.get_loggerdata(__name__)
 
 
 @chatrouter.post("/chat",response_model=chatresponse)
-async def chat(request:chatrequest,customerid : int = Depends(get_current_customer_id),):
+async def chat(request:chatrequest,customerid : int = Depends(check_chat_rate_limit),):
     trace_id = str(uuid.uuid4())
     try :
         
@@ -59,7 +59,7 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
         initial_state = {
             "message": request.message,
             "session_id": session_id,
-            "customer_id": str(customerid),
+            "authenticated_customer_id": customerid,
             "latitude": request.latitude,
             "longitude": request.longitude,
             "from_date": request.from_date,
@@ -101,7 +101,7 @@ async def chat(request:chatrequest,customerid : int = Depends(get_current_custom
         # A failed save must not fail the chat response.
         try:
             await save_conversation_to_sql(
-                customer_id=customerid,
+                 authenticated_customer_id=customerid,
                 session_id=session_id,
                 trace_id=trace_id,
                 question=request.message,

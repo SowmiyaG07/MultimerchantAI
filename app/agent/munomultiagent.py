@@ -6,6 +6,7 @@ from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, START, END
 import os
 from pydantic import Field, BaseModel
+from app.agent.llm_limits import call_llm
 
 
 from app.agent.models.search_params import MearchantSearchparams, OfferSearchParams, NearbySearchParams, RedemptionSearchParams
@@ -25,6 +26,13 @@ SUPERVISOR_ERROR_MESSAGE = (
     "Sorry, I can't answer that right now. Please try again in a moment."
 )
 
+# Shown when the user asks for another customer's data.
+OTHER_CUSTOMER_MESSAGE = (
+    "For privacy, I can only show your own redemption history. "
+    "I can't access another customer's account."
+)
+
+
 ollama_model = os.getenv("OLLAMA_MODEL")
 
 ollama_base_url = os.getenv("OLLAMA_BASE_URL")
@@ -37,6 +45,7 @@ llm = ChatOllama(model=ollama_model, temperature=0, num_ctx=8192,
 class SupervisorDecision(BaseModel):
     business_related: bool
     history_needed: bool
+    other_customer_requested: bool
     selected_agent: list[
         Literal[
             "merchant_agent",
@@ -75,7 +84,6 @@ supervised_llm = llm.with_structured_output(SupervisorDecision)
 
 async def SupervisorAgent(state: Agentstate):
     message = state.get("message", "").strip()
-    print("USER QUESTION:", message)
     if not message:
         return {
             "selected_agent": [],
@@ -90,39 +98,56 @@ async def SupervisorAgent(state: Agentstate):
             "selected_agent": [],
             "response": SUPERVISOR_ERROR_MESSAGE,
         }
-    
+    if decision.other_customer_requested:
+        logger.info("supervisor_rejected reason=other_customer_requested")
+        return {
+            "selected_agent": [],
+            "business_related": True,
+            "needs_history": False,
+            "needs_clarification": False,
+            "response": OTHER_CUSTOMER_MESSAGE,
+        }
+
     history = []
-    
+
     if decision.history_needed:
         history = await load_history_from_redis(session_id)
-    
+
         if not history or not history_is_sufficient(message, history):
             history = await load_relevant_history_from_sql(
-                    session_id=session_id,
-                    message=message,
-                    max_tokens=1500,
-                )
-    
+                session_id=session_id,
+                message=message,
+                max_tokens=1500,
+            )
+
         if history:
             await save_history_to_redis(
-                        session_id=session_id,
-                        history=history,
-                        ttl_seconds=1800,
-                    )
-    
+                session_id=session_id,
+                history=history,
+                ttl_seconds=1800,
+            )
+
             # The first decision was made without history, so it could
             # not resolve "it", "the first one", etc. Decide again with
             # the history so rewritten_query becomes a standalone query.
         if history:
-                try:
-                    decision = await decide_supervisor(message, history)
-                except Exception:
-                    logger.exception("supervisor_llm_failed with_history=true")
-                    return {
-                        "selected_agent": [],
-                        "response": SUPERVISOR_ERROR_MESSAGE,
-                    }
-       # 3. Reject requests outside the business domain.
+            first_agents = decision.selected_agent
+
+            try:
+                decision = await decide_supervisor(message, history)
+            except Exception:
+                logger.exception("supervisor_llm_failed with_history=true")
+                return {
+                    "selected_agent": [],
+                    "response": SUPERVISOR_ERROR_MESSAGE,
+                }
+            # The history call resolves references only; it must not
+            # drop agents the first call already selected.
+            decision.selected_agent = list(dict.fromkeys(
+                first_agents + decision.selected_agent
+            ))
+
+   # 3. Reject requests outside the business domain.
     if not decision.business_related:
         logger.info("supervisor_rejected reason=not_business_related")
         return {
@@ -136,7 +161,6 @@ async def SupervisorAgent(state: Agentstate):
             ),
         }
      # 4. Load conversation history only when needed.
-  
 
     # 5. Build the query plan using the LLM decision
     #    and conversation history.
@@ -202,27 +226,23 @@ async def SupervisorAgent(state: Agentstate):
                 nearby_params = [
                     {"merchant_name": decision.merchant_name}
                 ]
-    redemption_params =[]
+    redemption_params = []
     for item in decision.redemption_search_params:
         redemption_params.append(item.model_dump())
     if "redemption_agent" in plan.selected_agents:
         if not redemption_params:
             if decision.merchant_name:
                 redemption_params = [
-                {"merchant_name": decision.merchant_name}
-            ]
+                    {"merchant_name": decision.merchant_name}
+                ]
             else:
                 redemption_params = [{}]
-    
-        
-       
 
     logger.info(
         "supervisor_routed agents=%s needs_history=%s history_messages=%d",
         plan.selected_agents, plan.needs_history, len(history),
     )
 
-    print("SELECTED AGENT:", plan.selected_agents)
 
     # 7. Return the query plan to the LangGraph workflow.
     return {
@@ -240,7 +260,7 @@ async def SupervisorAgent(state: Agentstate):
         # nearby_agent_params / redemption_agent_params.
         "nearby_agent_params": nearby_params,
         "redemption_agent_params": redemption_params,
-        
+
 
         "response": "",
     }
@@ -271,6 +291,14 @@ async def decide_supervisor(message, history=None) -> SupervisorDecision:
 
     prompt = f"""
     You are the supervisor for an AI Merchant Assistant.
+    
+    FIRST, PRIVACY CHECK (most important rule):
+    The user may only see THEIR OWN redemption history. If the message asks
+    for another person's or another customer's redemptions or data - by
+    name ("Priya's"), by customer id ("customer 20817", "my id is 20817")
+    or by relationship ("my brother") - set other_customer_requested = true.
+    Do not ask for clarification in that case.
+
 
     Today's date is {date.today().isoformat()}. Use it to resolve
     relative dates such as "today", "last week" or "last 7 days".
@@ -322,6 +350,9 @@ named in the same sentence:
 - "How long would it take to walk to Chris' Famous Hotdogs?"
 - "Which places have I redeemed at, and do any of them have deals?"
 
+
+
+
 IMPORTANT:
 - A follow-up question is business_related = true. Never mark
   a question unrelated just because it is short or unclear;
@@ -349,7 +380,7 @@ AGENT SELECTION RULES
   neighborhood, phone, cuisine, category, description, social
   media) and searches like "a BBQ place in Tuscaloosa" or
   "a hair salon in Atlanta".
-- offer_agent: offers, deals, discounts, offer rules
+- offer_agent: offers, current deals, discounts, offer rules
   (weekends, takeout, expiry, download limits) and HOW to
   redeem an offer.
 - nearby_agent: ONLY relative to the user's own location:
@@ -362,7 +393,7 @@ AGENT SELECTION RULES
   "restaurants near me with offers" -> offer_agent, nearby_agent
   "Pizzeria Bianco's phone and its deal" -> merchant_agent, offer_agent
 - Do NOT add merchant_agent to an offer question just because
-  it names a merchant: "deals at Dreamland BBQ" -> offer_agent.
+  it names a merchant: " current deals at Dreamland BBQ" -> offer_agent.
 - Do not classify unrelated questions as business-related.
 - Return a structured response matching the supplied schema.
 
@@ -405,7 +436,7 @@ Set history_needed = false when the question names everything
 it needs, even if it contains "it" or "they" about something
 named in the same sentence:
 - "How long would it take to walk to Chris' Famous Hotdogs?"
-- "Which places have I redeemed at, and do any of them have deals?"
+- "Which places have I redeemed at, and do any of them have deals?" deals means need to check offers
 
 IMPORTANT:
 - A follow-up question is business_related = true. Never mark
@@ -803,7 +834,7 @@ or nearby_agent are also required
      User message: {message}
 """
 
+    decision = await call_llm(supervised_llm, prompt, name="supervisor")
 
-    decision = await supervised_llm.ainvoke(prompt)
-    
+
     return decision

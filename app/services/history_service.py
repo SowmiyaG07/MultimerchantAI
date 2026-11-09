@@ -54,7 +54,7 @@ def _insert_history_row(params: dict) -> None:
                 error_message
             )
             VALUES (
-                :customer_id,
+                :authenticated_customer_id,
                 :session_id,
                 :trace_id,
                 :question,
@@ -77,7 +77,7 @@ def _insert_history_row(params: dict) -> None:
 
 
 async def save_conversation_to_sql(
-    customer_id: int,
+    authenticated_customer_id: int,
     session_id: str,
     trace_id: str,
     question: str,
@@ -99,7 +99,7 @@ async def save_conversation_to_sql(
     await asyncio.to_thread(
         _insert_history_row,
         {
-            "customer_id": customer_id,
+            "authenticated_customer_id": authenticated_customer_id,
             "session_id": session_id,
             "trace_id": trace_id,
             "question": question,

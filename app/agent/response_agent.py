@@ -6,32 +6,38 @@ from app.agent.graph.state import Agentstate
 
 from app.agent.munomultiagent import llm
 from app.utilities.log import Applogger
+from app.agent.llm_limits import call_llm
 
 logger = Applogger.get_loggerdata(__name__)
 
 
-
+SECTION_TITLES = {
+    "MerchantAgent": "MERCHANT DETAILS",
+    "OfferAgent": "OFFERS AND DEALS",
+    "NearbyAgent": "DISTANCE AND NEARBY PLACES",
+    "RedemptionAgent": "THE USER'S REDEMPTIONS",
+}
 
 async def ResponseAgent(state: Agentstate) -> dict:
     # Step 1: Get results from each agent
     
      # 1. Current user message
     message = state.get("message", "")
+    
+    rewritten = state.get("expanded_query") or message
 
     # 2. Previous conversation
-    chat_history = state.get("chat_history", [])
+   # chat_history = state.get("chat_history", [])
 
     # 3. Results combined by reducer
     all_agent_results = state.get("all_agent_results", [])
     
         # Nothing came back
     if not all_agent_results:
-        print("FINAL RESPONSE:", "I couldn't find any relevant results.")
         return {"response": "I couldn't find any relevant results."}
 
     # One plain message (location, route, error): already the answer
     if len(all_agent_results) == 1 and isinstance(all_agent_results[0]["results"], str):
-        print("FINAL RESPONSE:", all_agent_results[0]["results"])
         return {"response": all_agent_results[0]["results"]}
 
     # Shown if the LLM fails
@@ -41,24 +47,24 @@ async def ResponseAgent(state: Agentstate) -> dict:
 
     
     # 4. Convert history and results into text
-    history_text = json.dumps(
-        chat_history,
-        indent=2,
-        default=str
-    )
-    result_text = json.dumps(
-        all_agent_results,
-        indent=2,
-        default = str
-    )
+    #history_text = json.dumps(
+        #chat_history,
+       # indent=2,
+        #default=str
+    #)
+    sections = []
+    for item in all_agent_results:
+        title = SECTION_TITLES.get(item["agent"], item["agent"])
+        body = json.dumps(item["results"], indent=2, default=str)
+        sections.append(f"### {title}\n{body}")
+    result_text = "\n\n".join(sections)
     prompt = f"""
 You are MunomerchantAI, a merchant assistant.
 
 CURRENT USER MESSAGE:
 {message}
 
-CONVERSATION HISTORY:
-{history_text}
+
 
 DATABASE RESULTS FROM AGENTS:
 {result_text}
@@ -112,17 +118,41 @@ MERCHANT AND OFFER MAPPING:
 27. When merchants and offers share the same ID, show each offer under its corresponding merchant.
 28. Do not associate an offer or redemption with a different merchant.
 29. If results belong to different merchants, keep their information separate.
+30. Answer ONLY the question below. Answer each part of it,
+    one by one, using the matching result.
+31. If no result covers a part of the question (for example
+    "current deals" but there are no offer results), say you
+    could not find that information.
+32. Redemption facts (whether, where, when) come ONLY from the
+    RedemptionAgent result. If it says no redemptions were
+    found, say exactly that. Never mention a redemption date
+    that is not in the result.
+33. Never add information the question did not ask for.
+34.  Start directly with the answer. Never mention agents, sections,
+   databases or "results". Keep it short and friendly.
+35. Every record under OFFERS AND DEALS is a current deal.
+    Describe its "offer", "offer_details" and "offer_valid_until".
+    
+36. Redemptions always belong to the logged-in user. Never
+    describe them as another person's, even if the question
+    names someone else.
+
+
+USER'S QUESTION: {message}
+(Same question with names resolved: {rewritten})
+
+Answer every part of the question above, one by one.
 
 """
     try:
      # 6. Call LLM
-        llm_response = await llm.ainvoke(prompt)
+        llm_response = await call_llm(llm, prompt, name="response")
+
         answer = (llm_response.content or "").strip()
     except Exception:
         logger.exception("response_llm_failed using_fallback=true")
         answer = ""
 
-    print("FINAL RESPONSE:", answer or fallback)
 
     # 7. Return response to graph state
     return {
