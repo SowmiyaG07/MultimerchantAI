@@ -9,7 +9,8 @@ class Agentstate(TypedDict,total= False):
     #User Input
     message : str 
     session_id : str 
-    customer_id : str 
+    authenticated_customer_id: int
+    
     latitude : float 
     longitude : float 
     from_date : date | None 
@@ -23,9 +24,12 @@ class Agentstate(TypedDict,total= False):
     # Supervisor routing
     selected_agent : list[str]
     business_related : bool
+    other_customer_requested : bool
     needs_history : bool
     needs_clarification : bool
     chat_history : list[dict]
+    customer_id : int
+    
     
     merchant_search_params : list[dict[str, Any]]
     offer_search_params : list[dict[str, Any]]
@@ -38,7 +42,7 @@ class Agentstate(TypedDict,total= False):
     offer_results : str | list[dict[str, Any]]
     nearby_merchantresults : str | list[dict[str, Any]]
     redemption_results : str | list[dict[str, Any]]
-    response_results : str
+    
     
     #Common Results -Reducer
     all_agent_results: Annotated[list[dict[str, Any]], operator.add]
