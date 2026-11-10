@@ -20,6 +20,7 @@ def _load_history_rows(session_id: str, limit: int):
             FROM dbo.ConversationHistory
             WHERE session_id = :session_id
               AND answer IS NOT NULL
+              AND status = 'success'
             ORDER BY created_at DESC
         """),
             {"session_id": session_id, "limit": limit},

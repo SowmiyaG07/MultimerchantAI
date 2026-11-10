@@ -169,6 +169,7 @@ Output: Return a message indicating that more search details are required.
             message = "Sorry, I couldn't search merchants right now."
             return {
                 "merchant_results": message,
+                "errors": ["merchant_search_failed"],
                 "all_agent_results": [
                     {
                         "agent": "MerchantAgent",

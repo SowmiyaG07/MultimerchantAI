@@ -6,7 +6,7 @@ from app.agent.graph.state import Agentstate
 
 from app.agent.munomultiagent import llm
 from app.utilities.log import Applogger
-from app.agent.llm_limits import call_llm
+from app.agent.llm_limits import call_llm, LLMBusyError
 
 logger = Applogger.get_loggerdata(__name__)
 
@@ -17,6 +17,120 @@ SECTION_TITLES = {
     "NearbyAgent": "DISTANCE AND NEARBY PLACES",
     "RedemptionAgent": "THE USER'S REDEMPTIONS",
 }
+
+# ---------------------------------------------
+# Fallback answer when the response LLM fails
+# ---------------------------------------------
+
+FALLBACK_TITLES = {
+    "MerchantAgent": "Merchants:",
+    "OfferAgent": "Offers:",
+    "NearbyAgent": "Nearby places:",
+    "RedemptionAgent": "Your redemptions:",
+}
+
+# (field, label) in the order they are shown. Everything else (ids,
+# long descriptions, social media) is left out.
+FALLBACK_FIELDS = [
+    ("redeemed_on", "Redeemed on"),
+    ("amount_spent", "Amount spent"),
+    ("offer", "Offer"),
+    ("offer_details", "Details"),
+    ("offer_valid_until", "Valid until"),
+    ("category", "Category"),
+    ("location", "Address"),
+    ("phone", "Phone"),
+    ("distance", "Distance"),
+    ("website", "Website"),
+]
+
+MAX_FALLBACK_RECORDS = 10
+
+FALLBACK_EMPTY_MESSAGE = (
+    "Sorry, I couldn't prepare an answer right now. Please try again."
+)
+
+
+def _plain(value) -> str:
+    """One value as short text: dates without time, no None."""
+    if value is None:
+        return ""
+    if hasattr(value, "date") and hasattr(value, "hour"):   # datetime
+        return value.date().isoformat()
+    if hasattr(value, "isoformat"):                        # date
+        return value.isoformat()
+    return str(value).strip()
+
+
+def _format_record(record: dict) -> str:
+    """One merchant / offer / redemption record as readable lines."""
+    record = dict(record)
+
+    # Address, city and state on one line
+    location = ", ".join(
+        _plain(record.get(key))
+        for key in ("address", "city", "state")
+        if _plain(record.get(key))
+    )
+    record["location"] = location
+
+    # Amount-based offers have no offer text
+    if not _plain(record.get("offer")) and _plain(record.get("amount")):
+        offer = f"${_plain(record['amount'])} off"
+        if _plain(record.get("min_purchase")):
+            offer += f" with a minimum purchase of ${_plain(record['min_purchase'])}"
+        record["offer"] = offer
+
+    lines = [f"- {_plain(record.get('name')) or 'Merchant'}"]
+    for key, label in FALLBACK_FIELDS:
+        value = _plain(record.get(key))
+        if value:
+            lines.append(f"  {label}: {value}")
+    return "\n".join(lines)
+
+
+def _fallback_text(all_agent_results: list[dict]) -> str:
+    """
+    Build a plain-text answer from the agent results without the LLM.
+    Messages are kept as they are; record lists become short lists.
+    """
+    sections = []
+
+    for item in all_agent_results:
+        results = item.get("results")
+
+        # A plain message such as "No matching merchants were found."
+        if isinstance(results, str):
+            if results.strip():
+                sections.append(results.strip())
+            continue
+
+        if not isinstance(results, list):
+            continue
+
+        lines = []
+        shown = 0
+        for record in results:
+            if not isinstance(record, dict):
+                continue
+            # Redemption summary line: "You have 3 redemptions from ..."
+            if set(record) == {"summary"}:
+                lines.append(_plain(record["summary"]))
+                continue
+            if shown >= MAX_FALLBACK_RECORDS:
+                continue
+            lines.append(_format_record(record))
+            shown += 1
+
+        if lines:
+            title = FALLBACK_TITLES.get(item.get("agent"), "Results:")
+            sections.append(title + "\n" + "\n".join(lines))
+
+    if not sections:
+        return FALLBACK_EMPTY_MESSAGE
+
+    return "Here is what I found:\n\n" + "\n\n".join(sections)
+
 
 async def ResponseAgent(state: Agentstate) -> dict:
     # Step 1: Get results from each agent
@@ -40,10 +154,8 @@ async def ResponseAgent(state: Agentstate) -> dict:
     if len(all_agent_results) == 1 and isinstance(all_agent_results[0]["results"], str):
         return {"response": all_agent_results[0]["results"]}
 
-    # Shown if the LLM fails
-    fallback = "\n\n".join(
-        str(item["results"]) for item in all_agent_results
-    )
+    # Shown if the LLM fails: plain text, never raw Python data
+    fallback = _fallback_text(all_agent_results)
 
     
     # 4. Convert history and results into text
@@ -149,9 +261,14 @@ Answer every part of the question above, one by one.
         llm_response = await call_llm(llm, prompt, name="response")
 
         answer = (llm_response.content or "").strip()
+    except LLMBusyError:
+        raise  # chat.py returns 503 so the app can retry
     except Exception:
         logger.exception("response_llm_failed using_fallback=true")
-        answer = ""
+        return {
+            "response": fallback,
+            "errors": ["response_llm_failed"],
+        }
 
 
     # 7. Return response to graph state

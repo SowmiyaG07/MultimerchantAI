@@ -51,4 +51,7 @@ class Agentstate(TypedDict,total= False):
     response_results: str
     response : str
     error_message : str | None
+    # Failures in this request. operator.add because parallel agents
+    # can fail in the same step; a plain key would raise InvalidUpdateError.
+    errors : Annotated[list[str], operator.add]
     

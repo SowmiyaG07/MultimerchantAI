@@ -11,6 +11,7 @@ from app.agent.graph.workflow import multiagent
 from app.services.history_service import save_conversation_to_sql
 from app.cache.redis_cache import append_conversation_to_redis
 from app.utilities.log import Applogger
+from app.agent.llm_limits import LLMBusyError, LLM_QUEUE_TIMEOUT_SECONDS
 
 
 chatrouter = APIRouter(tags=["chat"])
@@ -89,11 +90,18 @@ async def chat(request:chatrequest,customerid : int = Depends(check_chat_rate_li
 
         answer = result.get("response","")
 
+        # Any failure in this request (LLM, DB, Google) -> not a valid
+        # answer for follow-ups. Saved for tracking, never used as history.
+        errors = result.get("errors") or []
+        history_status = "error" if errors else "success"
+
         logger.info(
-            "chat_completed trace_id=%s customer_id=%s agents=%s duration_ms=%.0f",
+            "chat_completed trace_id=%s customer_id=%s agents=%s status=%s errors=%s duration_ms=%.0f",
             trace_id,
             customerid,
             result.get("selected_agent"),
+            history_status,
+            errors,
             (datetime.now() - created_at).total_seconds() * 1000,
         )
 
@@ -109,13 +117,17 @@ async def chat(request:chatrequest,customerid : int = Depends(check_chat_rate_li
                 created_at=created_at,
                 completed_at=datetime.now(),
                 model_name=ollama_model,
+                status=history_status,
+                error_message=",".join(errors) or None,
             )
 
-            await append_conversation_to_redis(
-                session_id=session_id,
-                question=request.message,
-                answer=answer,
-            )
+            # Redis holds the history used for follow-ups: success only.
+            if not errors:
+                await append_conversation_to_redis(
+                    session_id=session_id,
+                    question=request.message,
+                    answer=answer,
+                )
 
         except Exception:
             logger.exception(
@@ -131,6 +143,22 @@ async def chat(request:chatrequest,customerid : int = Depends(check_chat_rate_li
     
     except HTTPException:
         raise
+    except LLMBusyError:
+        logger.warning(
+            "chat_llm_busy trace_id=%s customer_id=%s",
+            trace_id, customerid,
+        )
+        retry_after = int(LLM_QUEUE_TIMEOUT_SECONDS) or 1
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "LLM_BUSY",
+                "message": "Our AI assistant is currently handling multiple requests. Please try again shortly.",
+                "retry_after_seconds": retry_after,
+                "trace_id": trace_id,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
     except Exception:
         logger.exception(
             "chat_failed trace_id=%s customer_id=%s",

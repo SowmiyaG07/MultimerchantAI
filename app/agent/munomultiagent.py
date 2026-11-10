@@ -6,7 +6,7 @@ from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, START, END
 import os
 from pydantic import Field, BaseModel
-from app.agent.llm_limits import call_llm
+from app.agent.llm_limits import call_llm, LLMBusyError
 
 
 from app.agent.models.search_params import MearchantSearchparams, OfferSearchParams, NearbySearchParams, RedemptionSearchParams
@@ -92,11 +92,14 @@ async def SupervisorAgent(state: Agentstate):
     session_id = state.get("session_id")
     try:
         decision = await decide_supervisor(message)
+    except LLMBusyError:
+        raise  # chat.py returns 503 so the app can retry
     except Exception:
         logger.exception("supervisor_llm_failed")
         return {
             "selected_agent": [],
             "response": SUPERVISOR_ERROR_MESSAGE,
+            "errors": ["supervisor_llm_failed"],
         }
     if decision.other_customer_requested:
         logger.info("supervisor_rejected reason=other_customer_requested")
@@ -135,11 +138,14 @@ async def SupervisorAgent(state: Agentstate):
 
             try:
                 decision = await decide_supervisor(message, history)
+            except LLMBusyError:
+                raise
             except Exception:
                 logger.exception("supervisor_llm_failed with_history=true")
                 return {
                     "selected_agent": [],
                     "response": SUPERVISOR_ERROR_MESSAGE,
+                    "errors": ["supervisor_llm_failed"],
                 }
             # The history call resolves references only; it must not
             # drop agents the first call already selected.

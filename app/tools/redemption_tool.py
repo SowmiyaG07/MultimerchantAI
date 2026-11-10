@@ -13,9 +13,16 @@ from app.tools.offer_search_tool import _NAME_FILTER
 # each location's State it is the six US zones below. AT TIME ZONE
 # takes Windows zone names and handles daylight saving itself.
 # The converted value keeps the name RedeemedOn
+#
+# Only the latest MAX_REDEMPTION_ROWS rows are returned. TotalCount
+# (COUNT(*) OVER ()) is computed before TOP, so every row carries the
+# number of ALL matching redemptions for the summary line.
+
+MAX_REDEMPTION_ROWS = 20
 
 _REDEMPTION_QUERY = """
-                    SELECT 
+                    SELECT TOP (:limit)
+                    COUNT(*) OVER () AS TotalCount,
                     R.LoadRedeemID,
                     R.GrossSale,
                     CAST(
@@ -65,9 +72,11 @@ def _get_redemptions_sync(
     start_date: datetime,
     end_date: datetime,
     merchant_name: str | None,
+    limit: int,
 ) -> list[dict]:
     query = _REDEMPTION_QUERY
     params = {
+        "limit": limit,
         "customer_id" : customer_id,
         "start_date" : start_date,
         "end_date" : end_date,
@@ -100,14 +109,26 @@ async def get_redemption_history(
     from_date: date,
     to_date: date,
     merchant_name: str | None = None,
+    limit: int = MAX_REDEMPTION_ROWS,
 ) -> list[dict]:
+    """
+    The customer's latest redemptions (newest first), at most `limit`
+    rows. Each row has TotalCount = all matching redemptions.
+    """
 
     # Step 1: Validate the customer ID
     try:
         customer_id = int(customer_id)
     except (TypeError, ValueError):
         raise ValueError("customer_id must be a valid integer.")
-    
+
+    # Never more than MAX_REDEMPTION_ROWS rows from the database
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = MAX_REDEMPTION_ROWS
+    limit = max(1, min(limit, MAX_REDEMPTION_ROWS))
+
       # Step 2: Convert the start date to midnight
     start_date = datetime.combine(
         from_date,
@@ -128,5 +149,6 @@ async def get_redemption_history(
         start_date,
         end_date,
         merchant_name,
+        limit,
     )
     return records

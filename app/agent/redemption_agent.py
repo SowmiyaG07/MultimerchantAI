@@ -18,6 +18,18 @@ DEFAULT_HISTORY_DAYS = 30
 # line (count/total) still covers every row in the range.
 MAX_LISTED_REDEMPTIONS = 20
 
+# Longest date range one question may search. A wider range (e.g.
+# "since 2015") is shortened to the latest MAX_HISTORY_DAYS days.
+MAX_HISTORY_DAYS = 365
+
+
+def limit_date_range(fromdate: date, todate: date) -> tuple[date, bool]:
+    """Return (from_date, was_shortened) for at most MAX_HISTORY_DAYS days."""
+    earliest = todate - timedelta(days=MAX_HISTORY_DAYS)
+    if fromdate < earliest:
+        return earliest, True
+    return fromdate, False
+
 def _to_date(value,field_name):
     """
     Accept a date, a datetime, or an ISO "YYYY-MM-DD" string.
@@ -166,7 +178,11 @@ async def redemptionagent(state: Agentstate) -> dict :
 
     try:
         from_value, to_value = resolve_date_range(from_date,to_date)
-        records = await get_redemption_history(customer_id,from_value,to_value,merchant_name)
+        from_value, range_shortened = limit_date_range(from_value, to_value)
+        # The tool returns at most MAX_REDEMPTION_ROWS (20) rows.
+        records = await get_redemption_history(
+            customer_id, from_value, to_value, merchant_name,
+        )
         
     except ValueError as error:
         logger.info("redemption_search_rejected customer_id=%s error=%s", customer_id, error)
@@ -188,6 +204,7 @@ async def redemptionagent(state: Agentstate) -> dict :
         message = "Sorry, I couldn't load your redemption history right now."
         return {
             "redemption_results": message,
+            "errors": ["redemption_search_failed"],
             "all_agent_results": [
                 {
                     "agent": "RedemptionAgent",
@@ -199,6 +216,13 @@ async def redemptionagent(state: Agentstate) -> dict :
     period = (
         f"{from_value.isoformat()} to {to_value.isoformat()}"
     )
+
+    # Told to the user when their range was longer than allowed
+    range_note = (
+        f" I can search up to {MAX_HISTORY_DAYS} days at a time, "
+        f"so I searched from {from_value.isoformat()}."
+        if range_shortened else ""
+    )
     if not records:
             logger.info("redemption_search customer_id=%s results=0", customer_id)
             if _is_blank(merchant_name):
@@ -208,6 +232,7 @@ async def redemptionagent(state: Agentstate) -> dict :
                     f"No redemptions at {merchant_name} were found "
                     f"from {period}."
                 )
+            message += range_note
 
            
             return {
@@ -221,19 +246,26 @@ async def redemptionagent(state: Agentstate) -> dict :
         }
 
         
-    count = len(records)
+    # The query returns at most MAX_LISTED_REDEMPTIONS rows; TotalCount
+    # is the number of ALL matching redemptions in the range.
+    count = records[0].get("TotalCount") or len(records)
 
-    logger.info("redemption_search customer_id=%s results=%d", customer_id, count)
-    
+    logger.info(
+        "redemption_search customer_id=%s results=%d rows_returned=%d",
+        customer_id, count, len(records),
+    )
+
     noun = "redemption" if count == 1 else "redemptions"
-    
+
     summary = (
         f"You have {count} {noun} from {period}."
     )
-    
+
     # Only the latest rows are listed below, so say so in the summary
     if count > MAX_LISTED_REDEMPTIONS:
         summary += f" Showing the latest {MAX_LISTED_REDEMPTIONS}."
+
+    summary += range_note
     # Step 10: Prepare the results for the response agent
     results = [
         {
