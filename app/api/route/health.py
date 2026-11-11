@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from app.agent.llm_provider import get_llm_model_name, get_llm_provider
 from app.cache.redis_cache import redis_client
 from app.database.database import engine
 from app.utilities.log import Applogger
@@ -52,6 +53,28 @@ async def _check_redis() -> None:
 
 
 async def _check_llm() -> None:
+    if get_llm_provider() == "gemini":
+        await _check_gemini()
+    else:
+        await _check_ollama()
+
+
+async def _check_gemini() -> None:
+    """Fetches the model's metadata: checks key and model without generating."""
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("GOOGLE_API_KEY is not set")
+
+    async with httpx.AsyncClient(timeout=CHECK_TIMEOUT_SECONDS) as client:
+        response = await client.get(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{get_llm_model_name()}",
+            # Key in a header, not the URL, so it never lands in access logs.
+            headers={"x-goog-api-key": api_key},
+        )
+        response.raise_for_status()
+
+
+async def _check_ollama() -> None:
     """Ollama answers /api/version without loading the model."""
     base_url = (os.getenv("OLLAMA_BASE_URL") or "").rstrip("/")
     if not base_url:

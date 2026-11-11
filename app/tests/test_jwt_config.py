@@ -29,6 +29,11 @@ CUSTOMER = {"customer_id": 123, "first_name": "Test", "last_name": "User"}
 
 def load_jwt(monkeypatch, **changes):
     """Reload app.api.jwt with BASE_ENV plus changes (None = unset)."""
+    # jwt.py calls load_dotenv() itself; switch it off here so a value
+    # the test removed is not filled back in from the real .env.
+    import dotenv
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: False)
+
     for name, value in {**BASE_ENV, **changes}.items():
         if value is None:
             monkeypatch.delenv(name, raising=False)

@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, APIRouter,Request
 
 from app.api.route.auth import authrouter
@@ -13,6 +15,7 @@ from sqlalchemy import text
 from app.utilities.log import Applogger
 from app.utilities.server_settings import WORKER_COUNT
 from app.agent.llm_limits import LLM_MAX_CONCURRENT_CALLS, LLM_EFFECTIVE_TOTAL_CALLS
+from app.tools.near_bymerchant_tool import close_google_client
 
 
 load_dotenv()
@@ -25,7 +28,17 @@ logger = Applogger.get_loggerdata(__name__)
 # safe even when the variable is forgotten. Set it only in local/dev.
 ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "false").strip().lower() == "true"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs once per worker: everything after yield runs at shutdown."""
+    yield
+    # Close the shared Google HTTP client (open connections).
+    await close_google_client()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="MultiAgentMerchant",
     description="AI-powered merchant and offer discovery API",
     version="1.0.0",

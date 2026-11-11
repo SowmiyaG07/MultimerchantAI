@@ -7,6 +7,12 @@ from uuid import uuid4
 
 import os
 
+from dotenv import load_dotenv
+
+# The settings below are read at import time, so .env must be loaded
+# here: this module can be the first one imported (main -> auth -> jwt).
+load_dotenv()
+
 
 # ---------------------------------
 # JWT configuration

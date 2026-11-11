@@ -218,6 +218,53 @@ def _lat_lng(latitude: float, longitude: float) -> dict:
     return {"location": {"latLng": {"latitude": latitude, "longitude": longitude}}}
 
 
+# ---------------------------------------------------------
+# One shared HTTP client for Google
+# ---------------------------------------------------------
+# Creating a client per call opens a new TCP + TLS connection to
+# Google every time (~100-300 ms extra) and throws it away. One client
+# per worker keeps connections open and reuses them.
+#
+# The client belongs to the event loop it was created on, so it is
+# re-created if the loop changes (tests run several loops; the server
+# has one per worker). main.py closes it when the server stops.
+
+GOOGLE_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+GOOGLE_LIMITS = httpx.Limits(max_connections=20, max_keepalive_connections=10)
+
+_google_client: httpx.AsyncClient | None = None
+_google_client_loop: asyncio.AbstractEventLoop | None = None
+
+
+def _new_google_client() -> httpx.AsyncClient:
+    return httpx.AsyncClient(timeout=GOOGLE_TIMEOUT, limits=GOOGLE_LIMITS)
+
+
+def get_google_client() -> httpx.AsyncClient:
+    """The shared client for this worker's event loop."""
+    global _google_client, _google_client_loop
+
+    loop = asyncio.get_running_loop()
+    if (
+        _google_client is None
+        or _google_client.is_closed
+        or _google_client_loop is not loop
+    ):
+        _google_client = _new_google_client()
+        _google_client_loop = loop
+    return _google_client
+
+
+async def close_google_client() -> None:
+    """Close the shared client (called at server shutdown)."""
+    global _google_client, _google_client_loop
+
+    if _google_client is not None and not _google_client.is_closed:
+        await _google_client.aclose()
+    _google_client = None
+    _google_client_loop = None
+
+
 async def get_route(
     user_latitude: float,
     user_longitude: float,
@@ -245,9 +292,10 @@ async def get_route(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(ROUTES_API_URL, json=body, headers=headers)
-            response.raise_for_status()
+        # Shared client: reuses the open connection to Google
+        client = get_google_client()
+        response = await client.post(ROUTES_API_URL, json=body, headers=headers)
+        response.raise_for_status()
     except httpx.HTTPError as error:
         raise RuntimeError(
             f"Google Routes API request failed: {error}") from error

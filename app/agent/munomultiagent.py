@@ -2,7 +2,7 @@
 from typing import TypedDict, Literal, Any
 from datetime import date
 from app.agent.graph.state import Agentstate
-from langchain_ollama import ChatOllama
+from app.agent.llm_provider import create_llm, get_llm_model_name
 from langgraph.graph import StateGraph, START, END
 import os
 from pydantic import Field, BaseModel
@@ -33,13 +33,11 @@ OTHER_CUSTOMER_MESSAGE = (
 )
 
 
-ollama_model = os.getenv("OLLAMA_MODEL")
+# Provider (Ollama or Gemini) is chosen by LLM_PROVIDER in .env.
+# Name kept as ollama_model so chat.py and existing log queries keep working.
+ollama_model = get_llm_model_name()
 
-ollama_base_url = os.getenv("OLLAMA_BASE_URL")
-
-
-llm = ChatOllama(model=ollama_model, temperature=0, num_ctx=8192,
-                 base_url=ollama_base_url, num_predict=1024)
+llm = create_llm()
 
 
 class SupervisorDecision(BaseModel):
@@ -355,6 +353,7 @@ it needs, even if it contains "it" or "they" about something
 named in the same sentence:
 - "How long would it take to walk to Chris' Famous Hotdogs?"
 - "Which places have I redeemed at, and do any of them have deals?"
+  ("deals" means offers, so offer_agent is needed as well)
 
 
 
@@ -424,50 +423,7 @@ General:
 1. MERCHANT AGENT
 
 Populate merchant_search_params with at least one parameter
-when merchant_agent is selected and theFOLLOW-UP DETECTION (history_needed)
-
-You do NOT see the previous conversation here. Decide only
-from the wording whether the question depends on it.
-
-Set history_needed = true when the question:
-- uses a reference instead of a name: it, its, they, them,
-  their, there, that/this/the restaurant, that offer,
-  that place, that transaction, the first one, the gym one
-- continues an earlier topic: "and the month before?",
-  "what about Saturday?", "tell me more"
-- is incomplete on its own: "What if I only order one drink?",
-  "Can I use it on a Sunday?"
-
-Set history_needed = false when the question names everything
-it needs, even if it contains "it" or "they" about something
-named in the same sentence:
-- "How long would it take to walk to Chris' Famous Hotdogs?"
-- "Which places have I redeemed at, and do any of them have deals?" deals means need to check offers
-
-IMPORTANT:
-- A follow-up question is business_related = true. Never mark
-  a question unrelated just because it is short or unclear;
-  if it could refer to an earlier merchant, offer, location or
-  redemption, set history_needed = true instead.
-- Restaurant contact details, phone numbers, addresses,
-  websites and business information are business-related.
-
-Examples:
-User: "Do they have any social media pages?"
--> business_related = true, history_needed = true
-
-User: "Can I use it on a Sunday?"
--> business_related = true, history_needed = true
-
-User: "What is Dreamland BBQ's website?"
--> business_related = true, history_needed = false
-
-
-
-
-User: "What is Python?"
--> business_related = false, history_needed = false
- user provides a
+when merchant_agent is selected and the user provides a
 merchant name or another usable merchant-search criterion.
 
 Extract only fields supported by the merchant-search schema,

@@ -49,6 +49,8 @@ def getcustomerid_email(email: str):
 
 
 def getcustomerid(customerid: int):
+    # Runs on every chat request: no Password here, it is only needed
+    # (and only selected) by the login lookup, getcustomerid_email().
     connection = get_connection()
 
     db = next(connection)
@@ -61,7 +63,6 @@ def getcustomerid(customerid: int):
                   CustomerID,
                   FirstName,
                   LastName,
-                  Password,
                   WhiteLabelID,
                   Active,
                   ExternalID
