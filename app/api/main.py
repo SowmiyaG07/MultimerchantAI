@@ -1,23 +1,62 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, APIRouter,Request
 
 from app.api.route.auth import authrouter
 from app.api.route.chat import chatrouter
 from app.api.route.health import healthrouter
+import os
 import time
+from dotenv import load_dotenv
 from app.utilities.log import Applogger
 from pydantic import BaseModel
 from app.database.database import get_connection
 from sqlalchemy import text
+from app.utilities.log import Applogger
+from app.utilities.server_settings import WORKER_COUNT
+from app.agent.llm_limits import LLM_MAX_CONCURRENT_CALLS, LLM_EFFECTIVE_TOTAL_CALLS
+from app.tools.near_bymerchant_tool import close_google_client
+
+
+load_dotenv()
 
 Applogger.setup()
 logger = Applogger.get_loggerdata(__name__)
 
+# Swagger (/docs), ReDoc (/redoc) and /openapi.json list every endpoint
+# and schema. They are OFF unless ENABLE_API_DOCS=true, so production is
+# safe even when the variable is forgotten. Set it only in local/dev.
+ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "false").strip().lower() == "true"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs once per worker: everything after yield runs at shutdown."""
+    yield
+    # Close the shared Google HTTP client (open connections).
+    await close_google_client()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="MultiAgentMerchant",
     description="AI-powered merchant and offer discovery API",
-    version="1.0.0"
-
+    version="1.0.0",
+    docs_url="/docs" if ENABLE_API_DOCS else None,
+    redoc_url="/redoc" if ENABLE_API_DOCS else None,
+    openapi_url="/openapi.json" if ENABLE_API_DOCS else None,
 )
+
+logger.info("api_docs enabled=%s", ENABLE_API_DOCS)
+# One line per worker process at startup: check that every worker
+# shows the same workers= value as uvicorn --workers.
+logger.info(
+    "server_settings pid=%s workers=%s llm_slots_per_worker=%s "
+    "llm_slots_total=%s",
+    os.getpid(), WORKER_COUNT,
+    LLM_MAX_CONCURRENT_CALLS, LLM_EFFECTIVE_TOTAL_CALLS,
+)
+
 
 @app.middleware("http")
 async def log_request(request: Request,call_next):

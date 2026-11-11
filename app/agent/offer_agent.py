@@ -119,6 +119,7 @@ async def offer_agent(state: Agentstate) -> dict:
             message = "Sorry, I couldn't search offers right now."
             return {
                 "offer_results": message,
+                "errors": ["offer_search_failed"],
                 "all_agent_results": [
                     {
                         "agent": "OfferAgent",

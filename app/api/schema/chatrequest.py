@@ -4,9 +4,12 @@ from datetime import date
 
 
 class chatrequest(BaseModel):
+    # No customer_id or session_id here: the customer comes ONLY from
+    # the JWT (dependencies.py) and the session is that customer's
+    # ExternalID (chat.py). Taking them from the request would let a
+    # caller name another customer. If an old app version still sends
+    # them, they are ignored (Pydantic's default extra="ignore").
     message : str = Field(...,min_length=2,max_length=2000)
-    session_id : str | None = None
-    customer_id : str | None = None
     latitude : float | None = Field (None,ge=-90,le=90)
     longitude : float | None = Field(None,ge=-180 , le = 180)
     

@@ -266,6 +266,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         message = "Sorry, I couldn't calculate the distance right now."
         return {
             "nearby_merchantresults": message,
+            "errors": ["route_lookup_failed"],
             "all_agent_results": [
                 {
                     "agent": "NearbyAgent",
@@ -280,6 +281,7 @@ async def nearby_merchanagent(state: Agentstate) -> dict:
         message = "Sorry, I couldn't search nearby places right now."
         return {
             "nearby_merchantresults": message,
+            "errors": ["nearby_search_failed"],
             "all_agent_results": [
                 {
                     "agent": "NearbyAgent",

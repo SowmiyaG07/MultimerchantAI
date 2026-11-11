@@ -16,6 +16,48 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Debug rate limit test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["app/tests/test_rate_limit_load.py", "-k", "${input:rateCase}", "-v", "-s"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "LLM_TIMEOUT_SECONDS": "600",
+                "CHAT_RATE_WINDOW": "600"
+            }
+        },
+        {
+            "name": "Debug load test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["app/tests/test_load.py", "-k", "${input:loadCase}", "-v", "-s"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "LLM_TIMEOUT_SECONDS": "600"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "rateCase",
+            "type": "pickString",
+            "description": "Which rate limit test?",
+            "options": ["rl02", "rl01", "rl03"],
+            "default": "rl02"
+        },
+        {
+            "id": "loadCase",
+            "type": "promptString",
+            "description": "Which load case? e.g. LT-01  or  LT-01 or LT-05",
+            "default": "LT-01"
         }
     ]
 }

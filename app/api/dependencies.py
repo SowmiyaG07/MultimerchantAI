@@ -16,7 +16,8 @@ CHAT_RATE_WINDOW = int(os.getenv("CHAT_RATE_WINDOW", "60"))
 
 def get_current_customer_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> str:
+) -> int:
+    """The customer ID (int) from the JWT's CustomerId claim; 401 if invalid."""
 
     token = credentials.credentials
 
@@ -25,7 +26,7 @@ def get_current_customer_id(
 
     except ValueError:
 
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904 - token details must not reach the client
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 "code": "INVALID_TOKEN",

@@ -15,7 +15,10 @@ DATASET_PATH = (
     / "app"
     / "evaluation"
     / "datasets"
-    / "cross_customertest.json"
+    # Routing cases: expected.selected_agent / merchant_name /
+    # needs_clarification. (cross_customertest.json belongs to
+    # test_cross_customer.py and has a different shape.)
+    / "supervisor_routing_tests.json"
 )
 
 with open(DATASET_PATH, "r", encoding="utf-8") as file:

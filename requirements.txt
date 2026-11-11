@@ -6,9 +6,10 @@ fastapi==0.152.0
 uvicorn==0.54.0
 pydantic==2.14.1
 
-# LangGraph agents and the Ollama model
+# LangGraph agents and the LLM (LLM_PROVIDER=ollama or gemini)
 langgraph==1.2.16
 langchain-ollama==1.1.0
+langchain-google-genai==4.4.3
 
 # Database (pyodbc is the driver behind SQLAlchemy's mssql+pyodbc URL)
 SQLAlchemy==2.1.5

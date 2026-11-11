@@ -102,12 +102,68 @@ def _check_local_rate_limit(key: str, limit: int, window_seconds: int) -> int:
                 
                 
              
+# ---------------------------------------------
+# Chat history cache
+# ---------------------------------------------
+# Redis only caches history; SQL always has every turn. So when Redis
+# is down, every function here returns at once (no 2-second wait) and
+# SQL answers instead.
+#
+# A turn that could not be appended leaves the Redis copy of that
+# session OUT OF DATE (it is missing the latest question/answer).
+# Such sessions are kept in _stale_sessions: their Redis copy is not
+# read, and is deleted as soon as Redis is reachable again, so the next
+# follow-up loads the full history from SQL.
+
+MAX_STALE_SESSIONS = 10_000
+
+
+def _history_key(session_id: str) -> str:
+    return f"chat_history:{session_id}"
+
+
+def _mark_stale(session_id: str) -> None:
+    if len(_stale_sessions) >= MAX_STALE_SESSIONS:
+        # Very long outage: stop tracking rather than grow forever.
+        # Untracked copies still expire with their TTL (30 minutes).
+        logger.warning("redis_stale_sessions_full max=%s", MAX_STALE_SESSIONS)
+        return
+    _stale_sessions.add(session_id)
+
+
+async def _drop_stale_copy(session_id: str) -> bool:
+    """
+    Delete the out-of-date Redis copy of a stale session.
+    Returns True when the session is clean (not stale, or deleted now).
+    """
+    if session_id not in _stale_sessions:
+        return True
+
+    try:
+        await redis_client.delete(_history_key(session_id))
+    except RedisError as error:
+        _mark_redis_down("drop_stale", error)
+        return False
+
+    _stale_sessions.discard(session_id)
+    logger.info("redis_stale_history_deleted")
+    return True
+
+
 async def load_history_from_redis(session_id: str | None) -> list[dict]:
-    """Returns [] when Redis is down, so the caller falls back to SQL."""
+    """Returns [] when Redis is down or the copy is stale: SQL answers."""
+    if not session_id or _redis_skipped():
+        return []
+
+    # Stale copy: delete it and let SQL load the full history.
+    if session_id in _stale_sessions:
+        await _drop_stale_copy(session_id)
+        return []
+
     try:
         return await _read_history(session_id)
     except RedisError as error:
-        logger.warning("redis_unavailable action=load error=%s", error)
+        _mark_redis_down("load", error)
         return []
 
 
@@ -115,9 +171,7 @@ async def _read_history(session_id: str | None) -> list[dict]:
     if not session_id:
         return []
 
-    key = f"chat_history:{session_id}"
-
-    raw_history = await redis_client.get(key)
+    raw_history = await redis_client.get(_history_key(session_id))
 
     if not raw_history:
         return []
@@ -134,25 +188,34 @@ async def _read_history(session_id: str | None) -> list[dict]:
     return []
 
 
+async def _write_history(session_id: str, history: list[dict], ttl_seconds: int) -> bool:
+    """Write the cached history. Returns False when Redis failed."""
+    try:
+        await redis_client.set(
+            _history_key(session_id),
+            json.dumps(history),
+            ex=ttl_seconds,
+        )
+    except RedisError as error:
+        _mark_redis_down("save", error)
+        return False
+    return True
+
+
 async def save_history_to_redis(
     session_id: str | None,
     history: list[dict],
     ttl_seconds: int = 1800,
 ) -> None:
-
-    if not session_id or not history:
+    """
+    Cache a full history loaded from SQL. It is complete, so it also
+    replaces a stale copy.
+    """
+    if not session_id or not history or _redis_skipped():
         return
 
-    key = f"chat_history:{session_id}"
-
-    try:
-        await redis_client.set(
-            key,
-            json.dumps(history),
-            ex=ttl_seconds,
-        )
-    except RedisError as error:
-        logger.warning("redis_unavailable action=save error=%s", error)
+    if await _write_history(session_id, history, ttl_seconds):
+        _stale_sessions.discard(session_id)
 
 
 async def append_conversation_to_redis(
@@ -166,28 +229,38 @@ async def append_conversation_to_redis(
     Append the latest question and answer to the cached history.
 
     History stays in chronological order (oldest first), and only
-    the last max_messages items are kept.
+    the last max_messages items are kept. If the turn cannot be added,
+    the session is marked stale (see above).
     """
 
     if not session_id or not question or not answer:
+        return
+
+    # Redis down: no wait, but the cache now misses this turn.
+    if _redis_skipped():
+        _mark_stale(session_id)
+        return
+
+    # Stale copy: appending to it would keep it incomplete. Delete it;
+    # the next follow-up rebuilds it from SQL (which has this turn).
+    if session_id in _stale_sessions:
+        await _drop_stale_copy(session_id)
         return
 
     # A failed read must not overwrite the cache with only this turn.
     try:
         history = await _read_history(session_id)
     except RedisError as error:
-        logger.warning("redis_unavailable action=append error=%s", error)
+        _mark_redis_down("append", error)
+        _mark_stale(session_id)
         return
 
     history.append({"role": "user", "content": question})
     history.append({"role": "assistant", "content": answer})
 
-    await save_history_to_redis(
-        session_id=session_id,
-        history=history[-max_messages:],
-        ttl_seconds=ttl_seconds,
-    )
-    
+    if not await _write_history(session_id, history[-max_messages:], ttl_seconds):
+        _mark_stale(session_id)
+
     
     
 async def check_rate_limit(
